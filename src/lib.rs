@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use cyclonedds_rs::{DdsParticipant, DdsPublisher, TopicType, PublisherBuilder, TopicBuilder, WriterBuilder, DdsWriter};
+use cyclonedds_rs::{DdsParticipant, DdsPublisher, TopicType, PublisherBuilder, TopicBuilder, WriterBuilder, DdsWriter, ReaderBuilder, DdsReader, SubscriberBuilder, DdsSubscriber};
 use error::MiddlewareError;
 pub mod error;
 /// Wrapper for Sabaton Middleware APIs
@@ -24,6 +24,10 @@ T: TopicType, {
     }
 }
 
+pub struct Reader<T:TopicType> {
+    reader : DdsReader<T>
+}
+
 #[derive(Clone)]
 pub struct Node {
     inner : Arc<Mutex<NodeInner>>,
@@ -34,6 +38,7 @@ struct NodeInner {
     namespace: String,
     participant : DdsParticipant,
     maybe_publisher : Option<DdsPublisher>,
+    maybe_subscriber : Option<DdsSubscriber>,
 }
 
 impl NodeInner {
@@ -45,6 +50,7 @@ impl NodeInner {
             namespace,
             participant,
             maybe_publisher: None,
+            maybe_subscriber : None,
         })
     }
 }
@@ -76,7 +82,39 @@ impl Node {
         }
     }
 
-  
+    pub fn subscribe<T>(&mut self, topic_path: &str) -> Result<Reader<T>,MiddlewareError > 
+    where T : TopicType
+    {
+        if let Ok(mut inner) = self.inner.lock() {
+            if inner.maybe_subscriber.is_none() {
+                inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
+            }
+            assert!(!inner.maybe_subscriber.is_none());
+
+            let topic = TopicBuilder::<T>::new().with_name(topic_path.to_owned()).create(&inner.participant)?;
+            let reader = ReaderBuilder::new().create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
+            Ok(Reader{reader})
+        } else {
+            Err(MiddlewareError::InconsistentDataStructure)
+        }
+    }
+
+    pub fn subscribe_async<T>(&mut self, topic_path: &str) -> Result<Reader<T>,MiddlewareError > 
+    where T : TopicType
+    {
+        if let Ok(mut inner) = self.inner.lock() {
+            if inner.maybe_subscriber.is_none() {
+                inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
+            }
+            assert!(!inner.maybe_subscriber.is_none());
+
+            let topic = TopicBuilder::<T>::new().with_name(topic_path.to_owned()).create(&inner.participant)?;
+            let reader = ReaderBuilder::new().as_async().create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
+            Ok(Reader{reader})
+        } else {
+            Err(MiddlewareError::InconsistentDataStructure)
+        }
+    }
 }
 
 
