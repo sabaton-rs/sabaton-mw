@@ -1,3 +1,13 @@
+/*
+    Copyright (C) Sabaton Systems LLP - All Rights Reserved
+    Unauthorized copying of this file, via any medium is strictly prohibited
+    Proprietary and confidential
+    Sojan James <sojan.james@gmail.com>, 2021
+
+    You are permitted to use this software as per the terms of the agreement 
+    between you and Sabaton Systems LLP.
+*/
+
 use std::sync::{Arc, Mutex};
 use cyclonedds_rs::{DdsParticipant, DdsPublisher, TopicType, PublisherBuilder, TopicBuilder, WriterBuilder, DdsWriter, ReaderBuilder, DdsReader, SubscriberBuilder, DdsSubscriber};
 use error::MiddlewareError;
