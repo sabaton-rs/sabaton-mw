@@ -7,10 +7,18 @@ edition = "2021"
 
 [dependencies]
 cyclonedds-rs = "0.3"
+cdds_derive = "0.1.0"
 async-std = "1.9.0"
 futures = "0.3"
 thiserror = "1.0"
-
-[dev-dependencies]
+someip = {git = "https://github.com/sjames/someip.git"}
+someip_derive = {git = "https://github.com/sjames/someip.git"}
+async-trait = "0.1.31"
 serde = "1"
 serde_derive = "1"
+
+
+[dev-dependencies]
+
+interface-example = {git = "https://github.com/sabaton-rs/interface-example.git"}
+

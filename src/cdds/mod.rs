@@ -1,1 +1,1 @@
-pub use cdds;
+pub mod service_discovery;
