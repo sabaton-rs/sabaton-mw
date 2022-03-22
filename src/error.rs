@@ -19,6 +19,11 @@ pub enum MiddlewareError {
     InternalError,
     #[error("IO Error")]
     IoError(#[from] std::io::Error),
+    #[error("Configuration Error - check config file")]
+    ConfigurationError,
+    #[error("Async reader error")]
+    ASyncReaderError(#[from] cyclonedds_rs::error::ReaderError),
+
 }
 
 

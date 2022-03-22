@@ -5,7 +5,7 @@ use std::net::IpAddr;
 use serde_derive::{Serialize, Deserialize};
 use tracing::{debug};
 
-#[derive(Serialize, Deserialize, Topic)]
+#[derive(Serialize, Deserialize, Topic, Debug)]
 pub struct ServiceInfo {
     pub node: String,
     #[topic_key]
@@ -13,13 +13,14 @@ pub struct ServiceInfo {
     #[topic_key]
     pub minor_version: u32,
     #[topic_key]
-    pub instance : u16,
+    pub instance_id : u16,
     pub socket_address: std::net::SocketAddr,
-    pub transport : Transport,
+    pub transports : Vec<Transport>,
+    pub service_id : u16,
    
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Transport {
     Udp,
     Tcp,
