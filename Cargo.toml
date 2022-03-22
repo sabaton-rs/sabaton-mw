@@ -16,9 +16,10 @@ someip_derive = {git = "https://github.com/sjames/someip.git"}
 async-trait = "0.1.31"
 serde = "1"
 serde_derive = "1"
-
+tracing = "0.1.32"
+toml = "0.5"
+tokio = {version = "1.4.0", features = ["full"]}
 
 [dev-dependencies]
-
 interface-example = {git = "https://github.com/sabaton-rs/interface-example.git"}
-
+tracing-subscriber = "0.3.9"

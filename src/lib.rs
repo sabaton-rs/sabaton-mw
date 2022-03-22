@@ -8,17 +8,23 @@
     between you and Sabaton Systems LLP.
 */
 
+use async_std::{path::PathBuf};
 use cyclonedds_rs::{
     DdsParticipant, DdsPublisher, DdsReader, DdsSubscriber, DdsWriter, PublisherBuilder,
     ReaderBuilder, SampleBuffer, SubscriberBuilder, TopicBuilder, TopicType, WriterBuilder,
 };
 use error::MiddlewareError;
-use someip::{ServerRequestHandler, CreateServerRequestHandler};
-use std::sync::{Arc, Mutex};
+use someip::{ServerRequestHandler, CreateServerRequestHandler, ServerRequestHandlerEntry};
+use tracing::debug;
+use std::{sync::{Arc, Mutex, RwLock}, path::Path};
+use tokio::{runtime::Runtime};
+
+use crate::services::get_config_path;
 pub mod error;
 pub mod cdds;
-/// Wrapper for Sabaton Middleware APIs
-///
+pub mod services;
+
+const SERVICE_MAPPING_CONFIG_PATH : &str = "/etc/sabaton/services.toml";
 
 pub trait SyncReader<T: TopicType> {
     fn take_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
@@ -84,7 +90,7 @@ where
 
 #[derive(Clone)]
 pub struct Node {
-    inner: Arc<Mutex<NodeInner>>,
+    inner: Arc<RwLock<NodeInner>>,
 }
 
 struct NodeInner {
@@ -93,6 +99,7 @@ struct NodeInner {
     participant: DdsParticipant,
     maybe_publisher: Option<DdsPublisher>,
     maybe_subscriber: Option<DdsSubscriber>,
+    handlers : Vec<ServerRequestHandlerEntry>,
 }
 
 impl NodeInner {
@@ -105,6 +112,7 @@ impl NodeInner {
             participant,
             maybe_publisher: None,
             maybe_subscriber: None,
+            handlers : Vec::new(),
         })
     }
 }
@@ -118,7 +126,7 @@ impl Node {
         let inner = NodeInner::create(name.into(), namespace.into())?;
 
         Ok(Node {
-            inner: Arc::new(Mutex::new(inner)),
+            inner: Arc::new(RwLock::new(inner)),
         })
     }
 
@@ -126,7 +134,7 @@ impl Node {
     where
         T: TopicType,
     {
-        if let Ok(mut inner) = self.inner.lock() {
+        if let Ok(mut inner) = self.inner.write() {
             if inner.maybe_publisher.is_none() {
                 inner.maybe_publisher = Some(PublisherBuilder::new().create(&inner.participant)?);
             }
@@ -147,7 +155,7 @@ impl Node {
     where
         T: TopicType,
     {
-        if let Ok(mut inner) = self.inner.lock() {
+        if let Ok(mut inner) = self.inner.write() {
             if inner.maybe_subscriber.is_none() {
                 inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
             }
@@ -168,7 +176,7 @@ impl Node {
     where
         T: TopicType,
     {
-        if let Ok(mut inner) = self.inner.lock() {
+        if let Ok(mut inner) = self.inner.write() {
             if inner.maybe_subscriber.is_none() {
                 inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
             }
@@ -189,8 +197,49 @@ impl Node {
     //Hosting services
     pub fn serve<T:CreateServerRequestHandler<Item=T>>(&mut self, server_impl:Arc<T>) -> Result<(),MiddlewareError> {
         
-        let handlers = T::create_server_request_handler(server_impl);
+        let mut handlers = T::create_server_request_handler(server_impl);
+        if let Ok(mut inner) = self.inner.write() {
+            inner.handlers.append(&mut handlers);
+            Ok(())
+        } else {
+            Err(MiddlewareError::InconsistentDataStructure)
+        }
+    }
+
+    /// The main processing loop of the node.  This function will block waiting for events and pumping 
+    /// the necessary callbacks.
+    pub fn spin(&mut self)   -> Result<(),MiddlewareError> {
+        let rt = Runtime::new().map_err(|_e| MiddlewareError::InternalError)?;
+
+        if let Ok(inner) = self.inner.read() {
+        
+            let services : Vec<&str> = inner.handlers.iter().map(|h| {
+                h.name
+            }).collect();
+
+            let maybe_services = if services.len() > 0 {
+                let config_path = get_config_path()?;
+                let services = crate::services::get_service_ids(&config_path, services)?;
+                Some(services)
+            } else {
+                None
+            };
+
+            debug!("starting tokio main loop");
+
+            // blocking main loop
+            let _result = rt.block_on(async { 
+
+            
+            });
+            debug!("Tokio main loop exited");
+
+        }
+
+        
+
         todo!()
+
     }
 }
 
@@ -210,7 +259,7 @@ mod tests {
     use interface_example::{Example, ExampleDispatcher};
     use serde_derive::Deserialize;
     use serde_derive::Serialize;
-    use someip::{ServerRequestHandlerEntry, ServiceIdentifier};
+    use someip::{ServerRequestHandlerEntry, ServiceIdentifier, ServiceInstance, ServiceVersion};
     use someip_derive::*;
     use async_trait::async_trait;
     #[test]
@@ -235,8 +284,12 @@ mod tests {
 
     #[test]
     fn host_service() {
+        std::env::set_var(SERVICE_MAPPING_CONFIG_PATH, "services.toml");
         #[service_impl(Example)]
         pub struct EchoServerImpl {}
+
+        impl ServiceInstance for EchoServerImpl {}
+        impl ServiceVersion for EchoServerImpl {}
 
         #[async_trait]
         impl Example for EchoServerImpl {
@@ -261,7 +314,9 @@ mod tests {
 
         let server = Arc::new(EchoServerImpl {});
 
-        node.serve(server);
+        node.serve(server).expect("Unable to serve");
+
+        node.spin().expect("Unable to spin");
 
 
 

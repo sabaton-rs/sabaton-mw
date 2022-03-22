@@ -3,11 +3,14 @@
 use cyclonedds_rs::*;
 use std::net::IpAddr;
 use serde_derive::{Serialize, Deserialize};
+use tracing::{debug};
 
 #[derive(Serialize, Deserialize, Topic)]
 pub struct ServiceInfo {
     pub node: String,
+    #[topic_key]
     pub major_version: u8,
+    #[topic_key]
     pub minor_version: u32,
     #[topic_key]
     pub instance : u16,
@@ -20,4 +23,13 @@ pub struct ServiceInfo {
 pub enum Transport {
     Udp,
     Tcp,
+}
+
+/// Create a topic for a service name.
+pub fn service_name_to_topic_name(service_name: &str) -> String {
+    let replaced_dots = service_name.replace(".", "/");
+    let topic_name = "/service_discovery/default/".to_owned() + replaced_dots.as_str();
+
+    debug!("SD topic name for {} is {}", service_name, &topic_name);
+    topic_name
 }

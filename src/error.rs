@@ -15,6 +15,10 @@ pub enum MiddlewareError {
     },
     #[error("Data structures inconsistent (would have panicked)")]
     InconsistentDataStructure,
+    #[error("Internal error")]
+    InternalError,
+    #[error("IO Error")]
+    IoError(#[from] std::io::Error),
 }
 
 

@@ -1,0 +1,4 @@
+services = [
+	[1,"dev.sabaton.ExampleInterface"],
+	[2,"dev.sabaton.FooInterface"],
+]
