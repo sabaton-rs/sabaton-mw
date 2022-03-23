@@ -612,6 +612,7 @@ mod tests {
 #[test]
 fn client() {
     std::env::set_var(SERVICE_MAPPING_CONFIG_PATH, "services.toml");
+    tracing_subscriber::fmt::init();
     
     // Client node in separate thread
 
