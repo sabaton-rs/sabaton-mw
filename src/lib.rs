@@ -67,6 +67,7 @@ where
     }
 }
 
+/* 
 pub struct Sample<T:TopicType> {
     sample : cyclonedds_rs::Sample<T>
 }
@@ -77,7 +78,7 @@ where
 {
 
 }
-
+*/
 pub struct Samples<T: TopicType> {
     samples: SampleBuffer<T>,
 }
@@ -219,7 +220,7 @@ impl Node {
             if inner.maybe_publisher.is_none() {
                 inner.maybe_publisher = Some(PublisherBuilder::new().create(&inner.participant)?);
             }
-            assert!(!inner.maybe_publisher.is_none());
+            assert!(inner.maybe_publisher.is_some());
 
             let topic = TopicBuilder::<T>::new()
                 .with_name(topic_path.to_owned())
@@ -240,7 +241,7 @@ impl Node {
             if inner.maybe_subscriber.is_none() {
                 inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
             }
-            assert!(!inner.maybe_subscriber.is_none());
+            assert!(inner.maybe_subscriber.is_some());
 
             let topic = TopicBuilder::<T>::new()
                 .with_name(topic_path.to_owned())
@@ -261,7 +262,7 @@ impl Node {
             if inner.maybe_subscriber.is_none() {
                 inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
             }
-            assert!(!inner.maybe_subscriber.is_none());
+            assert!(inner.maybe_subscriber.is_some());
 
             let topic = TopicBuilder::<T>::new()
                 .with_name(topic_path.to_owned())
@@ -309,11 +310,10 @@ impl Node {
     /// The main processing loop of the node.  This function will block waiting for events and pumping 
     /// the necessary callbacks.
     pub fn spin<F>(&self, mut main_function : F )  -> Result<(),MiddlewareError>
-    where F: 'static + Send + FnMut() -> ()
+    where F: 'static + Send + FnMut()
     {
         let mut builder = if self.inner.read().unwrap().single_threaded {
-           let builder =  Builder::new_current_thread();
-           builder
+           Builder::new_current_thread()
         } else {
             let mut builder = Builder::new_multi_thread();
             builder.worker_threads(self.inner.read().unwrap().num_workers);
@@ -333,7 +333,7 @@ impl Node {
                 h.name
             }).collect();
 
-            let maybe_services = if service_handlers.len() > 0 {
+            let maybe_services = if !service_handlers.is_empty() {
                 let config_path = get_config_path()?;
                 let services = crate::services::get_service_ids(&config_path, &service_handlers)?;
 
@@ -496,11 +496,8 @@ impl Node {
 
                 // wait for SIGINT
                 let mut signals = Signals::new(vec![libc::SIGINT]).unwrap();
-                loop {
-                    let _signal = signals.next().await.unwrap();
-                    debug!("SIGINT received");
-                    break;
-                }
+                let _signal = signals.next().await.unwrap();
+                debug!("SIGINT received");
             });
             debug!("Tokio main loop exited");
         Ok(())
