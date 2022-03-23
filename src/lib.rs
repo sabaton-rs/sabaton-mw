@@ -26,11 +26,14 @@ use futures_util::StreamExt;
 
 
 
-use crate::{services::get_config_path, cdds::service_discovery::{service_name_to_topic_name, ServiceInfo, Transport}, config::get_bind_address};
+use crate::{services::get_config_path, cdds::service_discovery::{service_name_to_topic_name, ServiceInfo, Transport}, config::get_bind_address, qos::Qos};
 pub mod error;
 pub mod cdds;
 pub mod services;
 pub mod config;
+pub mod qos;
+
+pub use cdds::cdds::CddsQos as QosImpl;
 
 const SERVICE_MAPPING_CONFIG_PATH : &str = "/etc/sabaton/services.toml";
 
@@ -85,7 +88,8 @@ pub struct Samples<T: TopicType> {
 
 
 
-impl<T> Samples<T>
+
+impl<'a,T> Samples<T>
 where
     T: TopicType,
 {
@@ -98,6 +102,16 @@ where
     pub fn get(&self, index:usize) -> Option<Arc<T>> {
         let sample = self.samples.get(index).get();
         sample
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = Arc<T>> + '_ {
+        let p = self.samples.iter().filter_map(|p| {
+            match p.get() {
+                Some(s) => Some(s),
+                None => None,
+            }
+        });
+        p
     }
  
 }
@@ -225,8 +239,12 @@ impl Node {
             let topic = TopicBuilder::<T>::new()
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
+
+            // Use the default Qos
+            let qos = QosImpl::default();
+            
             let writer =
-                WriterBuilder::new().create(inner.maybe_publisher.as_ref().unwrap(), topic)?;
+                WriterBuilder::new().with_qos(qos.into()).create(inner.maybe_publisher.as_ref().unwrap(), topic)?;
             Ok(Writer { writer })
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
@@ -246,8 +264,11 @@ impl Node {
             let topic = TopicBuilder::<T>::new()
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
+
+            let qos = QosImpl::default();
+
             let reader =
-                ReaderBuilder::new().create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
+                ReaderBuilder::new().with_qos(qos.into()).create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
             Ok(Reader { reader })
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
@@ -267,7 +288,10 @@ impl Node {
             let topic = TopicBuilder::<T>::new()
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
+
+            let qos = QosImpl::default();
             let reader = ReaderBuilder::new()
+                .with_qos(qos.into())
                 .as_async()
                 .create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
             Ok(Reader { reader })
@@ -455,28 +479,25 @@ impl Node {
                        tokio::spawn( async move {
                         let mut is_running = false;
                         loop {
-                            
                             if let Ok(len) = sd_subsriber.take(&mut samples).await {
-                                for i in 0..len {
-                                    if let Some(sample) = samples.get(i) {
-                                        println!("Got sample {:?}", sample);
-                                        if sample.major_version == major_version && sample.instance_id == instance_id &&
-                                            sample.minor_version == minor_version && !is_running  && sample.transport == Transport::Tcp {
-                                            
-                                            let name = name.clone();
-                                            let client = client.clone();
-                                            tokio::spawn(async move {
-                                                debug!("Going to run proxy for {} connecting to {}", &name, sample.socket_address );
-                                                if let Err(_res) = client.run(sample.socket_address).await {
-                                                    error!("Proxy run returned error");
-                                                } 
-                                            });
-                                            is_running = true;
-            
-                                            } else {
-                                                // ignore
-                                            }
-                                    }
+                                for sample in samples.iter() {
+                                    //println!("Got sample {:?}", sample);
+                                    if sample.major_version == major_version && sample.instance_id == instance_id &&
+                                        sample.minor_version == minor_version && !is_running  && sample.transport == Transport::Tcp {
+                                        
+                                        let name = name.clone();
+                                        let client = client.clone();
+                                        tokio::spawn(async move {
+                                            debug!("Going to run proxy for {} connecting to {}", &name, sample.socket_address );
+                                            if let Err(_res) = client.run(sample.socket_address).await {
+                                                error!("Proxy run returned error");
+                                            } 
+                                        });
+                                        is_running = true;
+        
+                                        } else {
+                                            // ignore
+                                        }
                                 }
                                 tokio::time::sleep(Duration::from_millis(1000)).await;                
                             }
@@ -679,8 +700,14 @@ fn client() {
     node.serve(server).expect("Unable to serve");
 
     node.spin( || {
-        println!("Server spinning");
+        tokio::spawn( async move {
 
+            let mut ticker = tokio::time::interval(Duration::from_millis(100));
+            loop {
+
+                let _ = ticker.tick().await;
+            }
+        });
     }).expect("Unable to spin");
 
 
