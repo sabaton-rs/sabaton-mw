@@ -8,23 +8,23 @@
     between you and Sabaton Systems LLP.
 */
 
-use async_std::{path::PathBuf};
+
 use async_trait::async_trait;
 use cyclonedds_rs::{
     DdsParticipant, DdsPublisher, DdsReader, DdsSubscriber, DdsWriter, PublisherBuilder,
-    ReaderBuilder, SampleBuffer, SubscriberBuilder, TopicBuilder, TopicType, WriterBuilder, error::ReaderError,
+    ReaderBuilder, SampleBuffer, SubscriberBuilder, TopicBuilder, TopicType, WriterBuilder,
 };
 use error::MiddlewareError;
 use futures::TryFutureExt;
 use services::get_service_ids;
 use someip::{ServerRequestHandler, CreateServerRequestHandler, ServerRequestHandlerEntry, Server, tasks::ConnectionInfo, Configuration, Proxy, ProxyConstruct,ServiceIdentifier, ServiceVersion};
 use tracing::{debug, error};
-use std::{sync::{Arc, Mutex, RwLock}, path::Path, time::Duration};
-use tokio::{runtime::Runtime, runtime::Builder};
+use std::{sync::{Arc, RwLock}, time::Duration};
+use tokio::{runtime::Builder};
 use async_signals::Signals;
 use futures_util::StreamExt;
 
-use fix_hidden_lifetime_bug::fix_hidden_lifetime_bug;
+
 
 use crate::{services::get_config_path, cdds::service_discovery::{service_name_to_topic_name, ServiceInfo, Transport}, config::get_bind_address};
 pub mod error;
@@ -173,7 +173,7 @@ impl NodeBuilder {
         }
     }
 
-    pub fn build(mut self, name: String) -> Result<Node, MiddlewareError> {
+    pub fn build(self, name: String) -> Result<Node, MiddlewareError> {
         let participant = DdsParticipant::create(None, None, None)?;
 
         let inner = NodeInner {
@@ -356,7 +356,7 @@ impl Node {
 
         } else { None};
 
-        let mut maybe_proxies = if let Ok(mut inner) = self.inner.write() { 
+        let maybe_proxies = if let Ok(mut inner) = self.inner.write() { 
             let proxies : Vec<(String, Box<dyn Proxy>,u8,u32)> = inner.proxies.drain(0..).collect();
             Some(proxies)
         } else {
@@ -467,7 +467,7 @@ impl Node {
                                             let client = client.clone();
                                             tokio::spawn(async move {
                                                 debug!("Going to run proxy for {} connecting to {}", &name, sample.socket_address );
-                                                if let Err(res) = client.run(sample.socket_address).await {
+                                                if let Err(_res) = client.run(sample.socket_address).await {
                                                     error!("Proxy run returned error");
                                                 } 
                                             });
@@ -497,7 +497,7 @@ impl Node {
                 // wait for SIGINT
                 let mut signals = Signals::new(vec![libc::SIGINT]).unwrap();
                 loop {
-                    let signal = signals.next().await.unwrap();
+                    let _signal = signals.next().await.unwrap();
                     debug!("SIGINT received");
                     break;
                 }
@@ -541,7 +541,7 @@ mod tests {
             name: String,
         }
 
-        let mut node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
+        let node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
         let mut subscriber = node.subscribe::<A>("chatter").expect("unable ti subscribe");
 
         let mut p = node
@@ -594,7 +594,7 @@ mod tests {
             }
         }
 
-        let mut node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
+        let node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
 
         let server = Arc::new(EchoServerImpl {});
 
@@ -617,7 +617,7 @@ fn client() {
     // Client node in separate thread
 
     thread::spawn( || {
-    let mut client_node = NodeBuilder::default().build("client".to_owned()).expect("Node creation");
+    let client_node = NodeBuilder::default().build("client".to_owned()).expect("Node creation");
     let proxy = client_node.create_proxy::<ExampleProxy>().expect("Unable to create proxy");
     
     client_node.spin( move ||  {
@@ -675,7 +675,7 @@ fn client() {
     }
 
     // Server node
-    let mut node = NodeBuilder::default().build("server".to_owned()).expect("Node creation");
+    let node = NodeBuilder::default().build("server".to_owned()).expect("Node creation");
 
     let server = Arc::new(EchoServerImpl {});
 

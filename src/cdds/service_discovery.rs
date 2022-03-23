@@ -1,7 +1,7 @@
 /// Topics for use in Service Discovery
 /// We use DDS to locate the IP address and port of services
 use cyclonedds_rs::*;
-use std::net::IpAddr;
+
 use serde_derive::{Serialize, Deserialize};
 use tracing::{debug};
 
