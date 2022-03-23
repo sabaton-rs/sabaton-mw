@@ -374,7 +374,7 @@ impl Node {
                         let topic_name = service_name_to_topic_name(&service);
                         let mut sd_publisher = self.advertise::<ServiceInfo>(&topic_name).expect("Unable to create topic publisher for SD");
 
-                        let (tx, mut rx) = Server::create_notify_channel(5);
+                        let (tx, mut rx) = Server::create_notify_channel(2);
                        
                         // Tokio task to publish Service discovery topic for this service
                         tokio::spawn(async move {
