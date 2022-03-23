@@ -17,7 +17,7 @@ use cyclonedds_rs::{
 use error::MiddlewareError;
 use futures::TryFutureExt;
 use services::get_service_ids;
-use someip::{ServerRequestHandler, CreateServerRequestHandler, ServerRequestHandlerEntry, Server, tasks::ConnectionInfo, Configuration, Proxy, ProxyConstruct,ServiceIdentifier};
+use someip::{ServerRequestHandler, CreateServerRequestHandler, ServerRequestHandlerEntry, Server, tasks::ConnectionInfo, Configuration, Proxy, ProxyConstruct,ServiceIdentifier, ServiceVersion};
 use tracing::{debug, error};
 use std::{sync::{Arc, Mutex, RwLock}, path::Path, time::Duration};
 use tokio::{runtime::Runtime, runtime::Builder};
@@ -276,7 +276,7 @@ impl Node {
     }
 
     // create a proxy for a service
-    pub fn create_proxy<T: 'static + Proxy + ProxyConstruct + ServiceIdentifier + Clone>(&self) -> Result<T,MiddlewareError> {
+    pub fn create_proxy<T: 'static + Proxy + ProxyConstruct + ServiceIdentifier + ServiceVersion + Clone>(&self) -> Result<T,MiddlewareError> {
         let config = Arc::new(Configuration::default());
         let config_path = get_config_path()?;
         let service_ids = vec![T::service_name()];
@@ -285,9 +285,9 @@ impl Node {
             return Err(MiddlewareError::ConfigurationError)
         }
         if let Ok(mut inner) = self.inner.write() { 
-            let mut proxy = T::new(service_ids[0].1, inner.next_client_id, config);
+            let proxy = T::new(service_ids[0].1, inner.next_client_id, config);
             inner.next_client_id += 1;
-            inner.proxies.push( (T::service_name().to_owned(), Box::new(proxy.clone()),0,0));
+            inner.proxies.push( (T::service_name().to_owned(), Box::new(proxy.clone()),T::__major_version__(),T::__minor_version__()));
             Ok(proxy)
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
