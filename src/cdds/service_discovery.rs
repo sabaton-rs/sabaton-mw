@@ -15,12 +15,12 @@ pub struct ServiceInfo {
     #[topic_key]
     pub instance_id : u16,
     pub socket_address: std::net::SocketAddr,
-    pub transports : Vec<Transport>,
+    pub transport : Transport,
     pub service_id : u16,
    
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum Transport {
     Udp,
     Tcp,

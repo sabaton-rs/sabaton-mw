@@ -342,6 +342,19 @@ impl Node {
                                         ConnectionInfo::ConnectionDropped(_i) => {}
                                         ConnectionInfo::UdpServerSocket(s) => {
                                             println!("Local UDP socket {:?}", s);
+                                            let service_info = ServiceInfo {
+                                                node: node_name.clone(),
+                                                major_version,
+                                                minor_version,
+                                                instance_id,
+                                                socket_address: s,
+                                                transport: Transport::Udp,
+                                                service_id
+                                            };
+                                            println!("Going to Publish SD packet for Udp");
+
+                                            sd_publisher.publish(Arc::new(service_info)).expect("Unable to publish SD topic");
+                                            println!("Published SD packet");
                                         }
                                         ConnectionInfo::TcpServerSocket(s) => {
                                             println!("Local TCP socket {:?}", s);
@@ -352,7 +365,7 @@ impl Node {
                                                 minor_version,
                                                 instance_id,
                                                 socket_address: s,
-                                                transports: vec![Transport::Udp, Transport::Tcp],
+                                                transport: Transport::Tcp,
                                                 service_id
                                             };
                                             println!("Going to Publish SD packet");
@@ -406,7 +419,7 @@ impl Node {
                                     if let Some(sample) = samples.get(i) {
                                         println!("Got sample {:?}", sample);
                                         if sample.major_version == major_version && sample.instance_id == instance_id &&
-                                            sample.minor_version == minor_version && !is_running {
+                                            sample.minor_version == minor_version && !is_running  && sample.transport == Transport::Tcp {
                                             
                                             let name = name.clone();
                                             let client = client.clone();
@@ -571,10 +584,10 @@ fn client() {
 
             tokio::time::sleep(Duration::from_millis(3000)).await;
 
-            let call_properties = CallProperties::with_timeout(Duration::from_millis(15000));
+            let call_properties = CallProperties::with_timeout(Duration::from_millis(5000));
 
             match proxy.echo("Hello".to_string(),&call_properties).await {
-                Ok(res) => assert_eq!(res.echo.as_str(), "Hello" ),
+                Ok(res) => {assert_eq!(res.echo.as_str(), "Hello" ); println!("Received echo");},
                 Err(e) => {
                     println!("Error:{:?}",e);
                     panic!("Echo response failed");
@@ -598,8 +611,12 @@ fn client() {
     #[async_trait]
     impl Example for EchoServerImpl {
         
-        async fn echo(&self, _data: String) -> Result<EchoResponse, ExampleError> {
-            Err(ExampleError::Unknown)
+        async fn echo(&self, data: String) -> Result<EchoResponse, ExampleError> {
+
+            let response = EchoResponse {
+                echo : data,
+            };
+            Ok(response)
         }
 
         fn set_status(
