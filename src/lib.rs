@@ -20,7 +20,7 @@ use services::get_service_ids;
 use someip::{ServerRequestHandler, CreateServerRequestHandler, ServerRequestHandlerEntry, Server, tasks::ConnectionInfo, Configuration, Proxy, ProxyConstruct,ServiceIdentifier};
 use tracing::{debug, error};
 use std::{sync::{Arc, Mutex, RwLock}, path::Path, time::Duration};
-use tokio::{runtime::Runtime};
+use tokio::{runtime::Runtime, runtime::Builder};
 use async_signals::Signals;
 use futures_util::StreamExt;
 
@@ -141,6 +141,60 @@ pub struct Node {
     inner: Arc<RwLock<NodeInner>>,
 }
 
+pub struct NodeBuilder {
+    namespace : String,
+    num_workers : usize,
+    single_threaded : bool,
+}
+
+impl Default for NodeBuilder {
+    fn default() -> Self {
+        Self { namespace: Default::default(), num_workers: 1, single_threaded: true }
+    }
+}
+
+impl NodeBuilder {
+    pub fn with_namespace(mut self, namespace: String) -> Self {
+        self.namespace = namespace;
+        self
+    }
+
+    pub fn multi_threaded(mut self) -> Self {
+        self.single_threaded = false;
+        self
+    }
+
+    pub fn with_num_workers(mut self, num_workers: usize) -> Self {
+        if !self.single_threaded {
+            self.num_workers = num_workers;
+            self
+        } else {
+            panic!("workers not allowed on single threaded runtime");
+        }
+    }
+
+    pub fn build(mut self, name: String) -> Result<Node, MiddlewareError> {
+        let participant = DdsParticipant::create(None, None, None)?;
+
+        let inner = NodeInner {
+            name,
+            namespace: self.namespace,
+            participant,
+            maybe_publisher: None,
+            maybe_subscriber: None,
+            handlers: Vec::new(),
+            next_client_id: 0,
+            proxies: Vec::new(),
+            single_threaded: self.single_threaded,
+            num_workers: self.num_workers,
+        };
+
+        Ok(Node {
+            inner: Arc::new(RwLock::new(inner)),
+        })
+    }
+}
+
 struct NodeInner {
     name: String,
     namespace: String,
@@ -150,37 +204,12 @@ struct NodeInner {
     handlers : Vec<ServerRequestHandlerEntry>,
     next_client_id : u16,
     proxies : Vec<(String, Box<dyn Proxy>, u8, u32)>,
+    single_threaded : bool,
+    num_workers : usize,
 }
 
-impl NodeInner {
-    pub fn create(name: String, namespace: String) -> Result<NodeInner, MiddlewareError> {
-        let participant = DdsParticipant::create(None, None, None)?;
-
-        Ok(NodeInner {
-            name,
-            namespace,
-            participant,
-            maybe_publisher: None,
-            maybe_subscriber: None,
-            handlers : Vec::new(),
-            next_client_id : 0,
-            proxies : Vec::new(),
-        })
-    }
-}
 
 impl Node {
-    pub fn create(
-        context_: InitContext,
-        name: &str,
-        namespace: &str,
-    ) -> Result<Node, MiddlewareError> {
-        let inner = NodeInner::create(name.into(), namespace.into())?;
-
-        Ok(Node {
-            inner: Arc::new(RwLock::new(inner)),
-        })
-    }
 
     pub fn advertise<T>(&self, topic_path: &str) -> Result<Writer<T>, MiddlewareError>
     where
@@ -282,7 +311,20 @@ impl Node {
     pub fn spin<F>(&self, mut main_function : F )  -> Result<(),MiddlewareError>
     where F: 'static + Send + FnMut() -> ()
     {
-        let rt = Runtime::new().map_err(|_e| MiddlewareError::InternalError)?;
+        let mut builder = if self.inner.read().unwrap().single_threaded {
+           let builder =  Builder::new_current_thread();
+           builder
+        } else {
+            let mut builder = Builder::new_multi_thread();
+            builder.worker_threads(self.inner.read().unwrap().num_workers);
+            builder
+        };
+
+        builder.thread_name(format!("{}-worker",self.inner.read().unwrap().name));
+        builder.enable_all();
+
+        let rt = builder.build().map_err(|_e| MiddlewareError::InternalError)?;
+
         let config = Arc::new(Configuration::default());
 
         let maybe_services = if let Ok(inner) = self.inner.read() {
@@ -499,7 +541,7 @@ mod tests {
             name: String,
         }
 
-        let mut node = Node::create(InitContext::new(), "nodename", "namespace").expect("Node");
+        let mut node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
         let mut subscriber = node.subscribe::<A>("chatter").expect("unable ti subscribe");
 
         let mut p = node
@@ -552,7 +594,7 @@ mod tests {
             }
         }
 
-        let mut node = Node::create(InitContext::new(), "nodename", "namespace").expect("Node");
+        let mut node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
 
         let server = Arc::new(EchoServerImpl {});
 
@@ -574,7 +616,7 @@ fn client() {
     // Client node in separate thread
 
     thread::spawn( || {
-    let mut client_node = Node::create(InitContext::new(), "client", "namespace").expect("Node");
+    let mut client_node = NodeBuilder::default().build("client".to_owned()).expect("Node creation");
     let proxy = client_node.create_proxy::<ExampleProxy>().expect("Unable to create proxy");
     
     client_node.spin( move ||  {
@@ -632,7 +674,7 @@ fn client() {
     }
 
     // Server node
-    let mut node = Node::create(InitContext::new(), "nodename", "namespace").expect("Node");
+    let mut node = NodeBuilder::default().build("server".to_owned()).expect("Node creation");
 
     let server = Arc::new(EchoServerImpl {});
 
