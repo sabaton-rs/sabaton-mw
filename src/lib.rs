@@ -67,24 +67,10 @@ where
     }
 }
 
-/* 
-pub struct Sample<T:TopicType> {
-    sample : cyclonedds_rs::Sample<T>
-}
 
-impl <T> Sample <T>
-where 
-    T: TopicType
-{
-
-}
-*/
 pub struct Samples<T: TopicType> {
     samples: SampleBuffer<T>,
 }
-
-
-
 
 impl<'a,T> Samples<T>
 where
@@ -154,20 +140,22 @@ pub struct Node {
 }
 
 pub struct NodeBuilder {
-    namespace : String,
+    group_and_instance : Option<(String,String)>,
     num_workers : usize,
     single_threaded : bool,
 }
 
 impl Default for NodeBuilder {
     fn default() -> Self {
-        Self { namespace: Default::default(), num_workers: 1, single_threaded: true }
+        Self { group_and_instance:None, num_workers: 1, single_threaded: true,  }
     }
 }
 
 impl NodeBuilder {
-    pub fn with_namespace(mut self, namespace: String) -> Self {
-        self.namespace = namespace;
+   
+    pub fn with_group_and_instance(mut self, group: String, instance: String) -> Self {
+        self.group_and_instance = Some((group,instance));
+
         self
     }
 
@@ -190,7 +178,7 @@ impl NodeBuilder {
 
         let inner = NodeInner {
             name,
-            namespace: self.namespace,
+            group_and_instance: self.group_and_instance,
             participant,
             maybe_publisher: None,
             maybe_subscriber: None,
@@ -209,7 +197,7 @@ impl NodeBuilder {
 
 struct NodeInner {
     name: String,
-    namespace: String,
+    group_and_instance: Option<(String,String)>,
     participant: DdsParticipant,
     maybe_publisher: Option<DdsPublisher>,
     maybe_subscriber: Option<DdsSubscriber>,
@@ -221,9 +209,44 @@ struct NodeInner {
 }
 
 
+
 impl Node {
 
-    pub fn advertise<T>(&self, topic_path: &str) -> Result<Writer<T>, MiddlewareError>
+    fn get_topic_prefix(group_and_instance:&Option<(String,String)>) -> Option<String> {
+  
+            if let Some(inner) = group_and_instance {
+                let prefix = format!("/{}/{}",inner.0,inner.1);
+                Some(prefix)
+            } else {
+                None
+            }   
+    }
+
+    fn advertise_internal<T>(&self, topic_path: &str) -> Result<Writer<T>, MiddlewareError> 
+    where
+        T: TopicType, {
+        if let Ok(mut inner) = self.inner.write() {
+            if inner.maybe_publisher.is_none() {
+                inner.maybe_publisher = Some(PublisherBuilder::new().create(&inner.participant)?);
+            }
+            assert!(inner.maybe_publisher.is_some());
+
+            let topic = TopicBuilder::<T>::new()
+                .with_name(topic_path.to_owned())
+                .create(&inner.participant)?;
+
+            // Use the default Qos
+            let qos = QosImpl::default();
+            
+            let writer =
+                WriterBuilder::new().with_qos(qos.into()).create(inner.maybe_publisher.as_ref().unwrap(), topic)?;
+            Ok(Writer { writer })
+        } else {
+            Err(MiddlewareError::InconsistentDataStructure)
+        }
+    }
+
+    pub fn advertise<T>(&self) -> Result<Writer<T>, MiddlewareError>
     where
         T: TopicType,
     {
@@ -233,8 +256,15 @@ impl Node {
             }
             assert!(inner.maybe_publisher.is_some());
 
-            let topic = TopicBuilder::<T>::new()
-                .with_name(topic_path.to_owned())
+            let topic_builder = TopicBuilder::<T>::new();
+
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group_and_instance) {
+                topic_builder.with_name_prefix(prefix)
+            } else {
+                topic_builder
+            };
+
+            let topic = topic_builder
                 .create(&inner.participant)?;
 
             // Use the default Qos
@@ -393,7 +423,7 @@ impl Node {
                         let config = config.clone();
                         let node_name = self.inner.read().unwrap().name.clone();
                         let topic_name = service_name_to_topic_name(&service);
-                        let mut sd_publisher = self.advertise::<ServiceInfo>(&topic_name).expect("Unable to create topic publisher for SD");
+                        let mut sd_publisher = self.advertise_internal::<ServiceInfo>(&topic_name).expect("Unable to create topic publisher for SD");
 
                         let (tx, mut rx) = Server::create_notify_channel(2);
                        
@@ -476,7 +506,7 @@ impl Node {
                        tokio::spawn( async move {
                         let mut is_running = false;
                         loop {
-                            if let Ok(len) = sd_subsriber.take(&mut samples).await {
+                            if let Ok(_len) = sd_subsriber.take(&mut samples).await {
                                 for sample in samples.iter() {
                                     //println!("Got sample {:?}", sample);
                                     if sample.major_version == major_version && sample.instance_id == instance_id &&
@@ -556,11 +586,11 @@ mod tests {
             name: String,
         }
 
-        let node =   NodeBuilder::default().build("nodename".to_owned()).expect("Node creation");
+        let node =   NodeBuilder::default().with_group_and_instance("group_name".to_owned(),"instance_name".to_owned()).build("nodename".to_owned()).expect("Node creation");
         let mut subscriber = node.subscribe::<A>("chatter").expect("unable ti subscribe");
 
         let mut p = node
-            .advertise::<A>("chatter")
+            .advertise::<A>()
             .expect("cannot create writer");
 
         let a = A {

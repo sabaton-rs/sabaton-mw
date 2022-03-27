@@ -1,3 +1,10 @@
+/*
+    Copyright (C) Sabaton Systems LLP - All Rights Reserved
+    Sojan James <sojan.james@gmail.com>, 2021
+
+    SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-sabaton-commercial
+*/
+
 use cyclonedds_rs::{DdsQos, dds_reliability_kind};
 
 use crate::qos::{QosReliability,Qos, QosError, QosDurability, QosHistory};
