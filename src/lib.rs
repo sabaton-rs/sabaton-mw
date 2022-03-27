@@ -147,7 +147,7 @@ pub struct NodeBuilder {
 
 impl Default for NodeBuilder {
     fn default() -> Self {
-        Self { group_and_instance:None, num_workers: 1, single_threaded: true,  }
+        Self { group_and_instance:Some(("default".to_owned(),"0".to_owned())), num_workers: 1, single_threaded: true,  }
     }
 }
 
@@ -278,7 +278,38 @@ impl Node {
         }
     }
 
-    pub fn subscribe<T>(&self, topic_path: &str) -> Result<impl SyncReader<T>, MiddlewareError>
+    pub fn subscribe<T>(&self) -> Result<impl SyncReader<T>, MiddlewareError>
+    where
+        T: TopicType,
+    {
+        if let Ok(mut inner) = self.inner.write() {
+            if inner.maybe_subscriber.is_none() {
+                inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
+            }
+            assert!(inner.maybe_subscriber.is_some());
+
+            let topic_builder = TopicBuilder::<T>::new();
+
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group_and_instance) {
+                topic_builder.with_name_prefix(prefix)
+            } else {
+                topic_builder
+            };
+
+            let topic = topic_builder
+                .create(&inner.participant)?;
+
+            let qos = QosImpl::default();
+
+            let reader =
+                ReaderBuilder::new().with_qos(qos.into()).create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
+            Ok(Reader { reader })
+        } else {
+            Err(MiddlewareError::InconsistentDataStructure)
+        }
+    }
+
+    fn subscribe_async_internal<T>(&self, topic_path: &str) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
     {
@@ -293,16 +324,17 @@ impl Node {
                 .create(&inner.participant)?;
 
             let qos = QosImpl::default();
-
-            let reader =
-                ReaderBuilder::new().with_qos(qos.into()).create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
+            let reader = ReaderBuilder::new()
+                .with_qos(qos.into())
+                .as_async()
+                .create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
             Ok(Reader { reader })
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
         }
     }
 
-    pub fn subscribe_async<T>(&self, topic_path: &str) -> Result<Reader<T>, MiddlewareError>
+    pub fn subscribe_async<T>(&self) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
     {
@@ -312,8 +344,15 @@ impl Node {
             }
             assert!(inner.maybe_subscriber.is_some());
 
-            let topic = TopicBuilder::<T>::new()
-                .with_name(topic_path.to_owned())
+            let topic_builder = TopicBuilder::<T>::new();
+
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group_and_instance) {
+                topic_builder.with_name_prefix(prefix)
+            } else {
+                topic_builder
+            };
+
+            let topic = topic_builder
                 .create(&inner.participant)?;
 
             let qos = QosImpl::default();
@@ -497,7 +536,7 @@ impl Node {
 
                        let topic_name = service_name_to_topic_name(&name);
                        println!("Starting proxy for {} at {}", &name, &topic_name);
-                       let mut sd_subsriber = self.subscribe_async::<ServiceInfo>(&topic_name).unwrap();
+                       let mut sd_subsriber = self.subscribe_async_internal::<ServiceInfo>(&topic_name).unwrap();
                    
                        // max of 5 instances for a services. TODO: this could be in a config file
                        let mut samples = Samples::<ServiceInfo>::new(5);
@@ -587,7 +626,7 @@ mod tests {
         }
 
         let node =   NodeBuilder::default().with_group_and_instance("group_name".to_owned(),"instance_name".to_owned()).build("nodename".to_owned()).expect("Node creation");
-        let mut subscriber = node.subscribe::<A>("chatter").expect("unable ti subscribe");
+        let mut subscriber = node.subscribe::<A>().expect("unable ti subscribe");
 
         let mut p = node
             .advertise::<A>()
