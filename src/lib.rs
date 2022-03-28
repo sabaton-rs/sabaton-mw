@@ -399,8 +399,8 @@ impl Node {
 
     /// The main processing loop of the node.  This function will block waiting for events and pumping 
     /// the necessary callbacks.
-    pub fn spin<F>(&self, mut main_function : F )  -> Result<(),MiddlewareError>
-    where F: 'static + Send + FnMut()
+    pub fn spin<F>(&self, main_function : F )  -> Result<(),MiddlewareError>
+    where F: 'static + Send + FnOnce()
     {
         let mut builder = if self.inner.read().unwrap().single_threaded {
            Builder::new_current_thread()
