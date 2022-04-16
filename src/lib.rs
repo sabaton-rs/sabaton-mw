@@ -65,6 +65,42 @@ where
             .write(msg)
             .map_err(|op| MiddlewareError::DDSError(op))
     }
+
+    // Loan a buffer from the stack. This may not be supported always.
+    // The topic must of Fixed size and shared memory must be enabled in
+    // cyclone for this to work.
+    pub fn loan(&mut self) -> Result<Loaned<T>, MiddlewareError> {
+        match self.writer.loan() {
+            Ok(l) => Ok(Loaned { inner : l}),
+            Err(e) => match e {
+                cyclonedds_rs::DDSError::NotEnabled => Err(MiddlewareError::SharedMemoryNotEnabled),
+                _ => Err(MiddlewareError::DDSError(e))
+            },
+        }
+    }
+
+    // Return the loan that was taken.  The buffer will be published if it is marked 
+    // as initialized by the ``Loaned::assume_init`` function. If not initialized
+    // the buffer will be simple returned to the pool.
+    pub fn return_loan(&mut self, buffer : Loaned<T>) -> Result<(),MiddlewareError> {
+        self.writer.return_loan(buffer.inner)
+            .map_err(|op| MiddlewareError::DDSError(op))
+    }
+}
+
+pub struct Loaned<T: TopicType> {
+    inner : cyclonedds_rs::dds_writer::Loaned<T>,
+}
+
+impl <T> Loaned<T> 
+where T: Sized + TopicType {
+    pub fn as_mut_ptr(&mut self) -> Option<*mut T> {
+        self.inner.as_mut_ptr()
+    }
+
+    pub fn assume_init(self) -> Self {
+        Loaned { inner : self.inner.assume_init()}
+    }
 }
 
 pub struct SampleStorage<T: TopicType> {
@@ -152,21 +188,33 @@ pub struct Node {
 }
 
 pub struct NodeBuilder {
-    group_and_instance : Option<(String,String)>,
+    group : String,
+    instance : String,
     num_workers : usize,
     single_threaded : bool,
 }
 
 impl Default for NodeBuilder {
     fn default() -> Self {
-        Self { group_and_instance:Some(("default".to_owned(),"0".to_owned())), num_workers: 1, single_threaded: true,  }
+        Self { group : "default".to_owned(), instance: "0".to_owned(), num_workers: 1, single_threaded: true,  }
     }
 }
 
 impl NodeBuilder {
    
+    pub fn with_group(mut self, group : String) -> Self {
+        self.group = group;
+        self
+    }
+
+    pub fn with_instance(mut self, instance : String) -> Self {
+        self.instance = instance;
+        self
+    }
+
     pub fn with_group_and_instance(mut self, group: String, instance: String) -> Self {
-        self.group_and_instance = Some((group,instance));
+        self.group  = group;
+        self.instance = instance;
 
         self
     }
@@ -190,7 +238,8 @@ impl NodeBuilder {
 
         let inner = NodeInner {
             name,
-            group_and_instance: self.group_and_instance,
+            group : self.group,
+            instance : self.instance,
             participant,
             maybe_publisher: None,
             maybe_subscriber: None,
@@ -209,7 +258,8 @@ impl NodeBuilder {
 
 struct NodeInner {
     name: String,
-    group_and_instance: Option<(String,String)>,
+    group: String,
+    instance : String,
     participant: DdsParticipant,
     maybe_publisher: Option<DdsPublisher>,
     maybe_subscriber: Option<DdsSubscriber>,
@@ -224,14 +274,9 @@ struct NodeInner {
 
 impl Node {
 
-    fn get_topic_prefix(group_and_instance:&Option<(String,String)>) -> Option<String> {
-  
-            if let Some(inner) = group_and_instance {
-                let prefix = format!("/{}/{}",inner.0,inner.1);
-                Some(prefix)
-            } else {
-                None
-            }   
+    fn get_topic_prefix(group : &str, instance :&str) -> Option<String> {
+        let prefix = format!("/{}/{}",group,instance);
+        Some(prefix)
     }
 
     fn advertise_internal<T>(&self, topic_path: &str) -> Result<Writer<T>, MiddlewareError> 
@@ -270,7 +315,7 @@ impl Node {
 
             let topic_builder = TopicBuilder::<T>::new();
 
-            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group_and_instance) {
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group, &inner.instance) {
                 topic_builder.with_name_prefix(prefix)
             } else {
                 topic_builder
@@ -302,7 +347,7 @@ impl Node {
 
             let topic_builder = TopicBuilder::<T>::new();
 
-            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group_and_instance) {
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group, &inner.instance) {
                 topic_builder.with_name_prefix(prefix)
             } else {
                 topic_builder
@@ -358,7 +403,7 @@ impl Node {
 
             let topic_builder = TopicBuilder::<T>::new();
 
-            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group_and_instance) {
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&inner.group, &inner.instance) {
                 topic_builder.with_name_prefix(prefix)
             } else {
                 topic_builder

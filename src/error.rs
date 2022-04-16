@@ -28,6 +28,8 @@ pub enum MiddlewareError {
     ConfigurationError,
     #[error("Async reader error")]
     ASyncReaderError(#[from] cyclonedds_rs::error::ReaderError),
+    #[error("Shared memory  Not enabled")]
+    SharedMemoryNotEnabled,
 
 }
 
