@@ -27,7 +27,7 @@ pub struct ServiceInfo {
    
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq,Clone)]
 pub enum Transport {
     Udp,
     Tcp,

@@ -16,7 +16,7 @@ use futures::TryFutureExt;
 use services::get_service_ids;
 use someip::{ServerRequestHandler, CreateServerRequestHandler, ServerRequestHandlerEntry, Server, tasks::ConnectionInfo, Configuration, Proxy, ProxyConstruct,ServiceIdentifier, ServiceVersion};
 use tracing::{debug, error};
-use std::{sync::{Arc, RwLock}, time::Duration};
+use std::{sync::{Arc, RwLock}, time::Duration, ops::Deref};
 use tokio::{runtime::Builder};
 use async_signals::Signals;
 use futures_util::StreamExt;
@@ -67,6 +67,17 @@ where
     }
 }
 
+pub struct SampleStorage<T: TopicType> {
+    sample : cyclonedds_rs::serdes::SampleStorage<T>,
+}
+
+impl <T>Deref for SampleStorage<T> where T: TopicType {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.sample.deref()
+    }
+}
 
 pub struct Samples<T: TopicType> {
     samples: SampleBuffer<T>,
@@ -86,11 +97,11 @@ where
         let sample = self.samples.get(index).get();
         sample
     }
-
-    pub fn iter(&self) -> impl Iterator<Item = Arc<T>> + '_ {
+ 
+    pub fn iter(&self) -> impl Iterator<Item = SampleStorage<T>> + '_ {
         let p = self.samples.iter().filter_map(|p| {
-            match p.get() {
-                Some(s) => Some(s),
+            match p.get_sample() {
+                Some(s) => Some(SampleStorage{sample: s}),
                 None => None,
             }
         });
@@ -98,6 +109,7 @@ where
     }
  
 }
+
 
 
 unsafe impl <T> Sync for Reader<T> where
@@ -547,15 +559,18 @@ impl Node {
                         loop {
                             if let Ok(_len) = sd_subsriber.take(&mut samples).await {
                                 for sample in samples.iter() {
-                                    //println!("Got sample {:?}", sample);
+                                    println!("Got sample {:?}", sample.deref());
+                                    
+                                    let sample_socket_address= sample.socket_address;                                    
+
                                     if sample.major_version == major_version && sample.instance_id == instance_id &&
                                         sample.minor_version == minor_version && !is_running  && sample.transport == Transport::Tcp {
                                         
                                         let name = name.clone();
                                         let client = client.clone();
                                         tokio::spawn(async move {
-                                            debug!("Going to run proxy for {} connecting to {}", &name, sample.socket_address );
-                                            if let Err(_res) = client.run(sample.socket_address).await {
+                                            debug!("Going to run proxy for {} connecting to {}", &name, sample_socket_address );
+                                            if let Err(_res) = client.run(sample_socket_address).await {
                                                 error!("Proxy run returned error");
                                             } 
                                         });
@@ -645,8 +660,6 @@ mod tests {
                 println!("A -> {}", a.name);
             }
         }
-
-
         
     }
 
