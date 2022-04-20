@@ -8,6 +8,7 @@
 /// Topics for use in Service Discovery
 /// We use DDS to locate the IP address and port of services
 use cyclonedds_rs::*;
+use cdds_derive::Topic;
 
 use serde_derive::{Serialize, Deserialize};
 use tracing::{debug};
