@@ -1,6 +1,6 @@
 [package]
 name = "sabaton-mw"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "GPL-3.0 OR LicenseRef-sabaton-commercial"
 
@@ -8,7 +8,7 @@ license = "GPL-3.0 OR LicenseRef-sabaton-commercial"
 
 [dependencies]
 cyclonedds-rs = "0.4"
-cdds_derive = "0.1.0"
+cdds_derive = "0.1.1"
 async-std = "1.9.0"
 futures = "0.3"
 thiserror = "1.0"

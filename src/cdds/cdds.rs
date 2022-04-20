@@ -7,15 +7,14 @@
 
 use cyclonedds_rs::{DdsQos, dds_reliability_kind};
 
-use crate::qos::{QosReliability,Qos, QosError, QosDurability, QosHistory};
+use crate::qos::{QosReliability,Qos, QosError, QosDurability, QosHistory, QosCreate};
 
 
 pub struct CddsQos(DdsQos);
 
 impl Default for CddsQos {
     fn default() -> Self {
-        let qos = DdsQos::create().expect("unable to create QOS");
-        let mut qos = CddsQos(qos);
+        let mut qos = CddsQos::create();
         qos.set_durability(QosDurability::default()).expect("qos");
         qos.set_reliability(QosReliability::default()).expect("qos");
         qos.set_history(QosHistory::default()).expect("qos");
@@ -23,7 +22,16 @@ impl Default for CddsQos {
     }
 }
 
+impl QosCreate for CddsQos {
+    fn create() ->  Self {
+        let qos = DdsQos::create().expect("unable to create QOS");
+         CddsQos(qos)
+    }
+}
+
+
 impl Qos for CddsQos {
+
     fn set_reliability(&mut self, reliability: QosReliability) -> Result<(),crate::qos::QosError> {
         match reliability {
             QosReliability::BestEffort(max_blocking_time) => self.0.set_reliability(dds_reliability_kind::DDS_RELIABILITY_BEST_EFFORT, max_blocking_time),
