@@ -29,7 +29,7 @@ use tokio::runtime::Builder;
 use tracing::{debug, error};
 
 use crate::{
-    cdds::service_discovery::{service_name_to_topic_name, ServiceInfo, Transport},
+    cdds::{service_discovery::{service_name_to_topic_name, ServiceInfo, Transport}, cdds::{publish_options_to_cdds_qos, subscribe_options_to_cdds_qos}},
     config::get_bind_address,
     qos::{Qos, QosCreate},
     services::get_config_path,
@@ -382,28 +382,7 @@ impl Node {
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
 
-            let mut qos = QosImpl::create();
-            if options.durability.is_some() {
-                qos.set_durability(options.durability.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_durability(QosDurability::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
-            if options.reliability.is_some() {
-                qos.set_reliability(options.reliability.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_reliability(QosReliability::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
-            if options.history.is_some() {
-                qos.set_history(options.history.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_history(QosHistory::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
+            let qos = publish_options_to_cdds_qos(options)?;
 
             let writer = WriterBuilder::new()
                 .with_qos(qos.into())
@@ -446,28 +425,7 @@ impl Node {
 
             let topic = topic_builder.create(&inner.participant)?;
 
-            let mut qos = QosImpl::create();
-            if options.durability.is_some() {
-                qos.set_durability(options.durability.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_durability(QosDurability::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
-            if options.reliability.is_some() {
-                qos.set_reliability(options.reliability.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_reliability(QosReliability::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
-            if options.history.is_some() {
-                qos.set_history(options.history.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_history(QosHistory::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
+            let qos = publish_options_to_cdds_qos(options)?;
 
             let writer = WriterBuilder::new()
                 .with_qos(qos.into())
@@ -513,28 +471,7 @@ impl Node {
 
             let topic = topic_builder.create(&inner.participant)?;
 
-            let mut qos = QosImpl::create();
-            if options.durability.is_some() {
-                qos.set_durability(options.durability.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_durability(QosDurability::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
-            if options.reliability.is_some() {
-                qos.set_reliability(options.reliability.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_reliability(QosReliability::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
-            if options.history.is_some() {
-                qos.set_history(options.history.as_ref().unwrap().clone())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            } else {
-                qos.set_history(QosHistory::default())
-                    .map_err(|_e| MiddlewareError::QosError)?;
-            }
+            let qos = subscribe_options_to_cdds_qos(options)?;
 
             let reader = ReaderBuilder::new()
                 .with_qos(qos.into())
@@ -550,6 +487,7 @@ impl Node {
         T: TopicType,
     {
         if let Ok(mut inner) = self.inner.write() {
+
             if inner.maybe_subscriber.is_none() {
                 inner.maybe_subscriber = Some(SubscriberBuilder::new().create(&inner.participant)?);
             }
@@ -559,28 +497,7 @@ impl Node {
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
 
-                let mut qos = QosImpl::create();
-                if options.durability.is_some() {
-                    qos.set_durability(options.durability.as_ref().unwrap().clone())
-                        .map_err(|_e| MiddlewareError::QosError)?;
-                } else {
-                    qos.set_durability(QosDurability::default())
-                        .map_err(|_e| MiddlewareError::QosError)?;
-                }
-                if options.reliability.is_some() {
-                    qos.set_reliability(options.reliability.as_ref().unwrap().clone())
-                        .map_err(|_e| MiddlewareError::QosError)?;
-                } else {
-                    qos.set_reliability(QosReliability::default())
-                        .map_err(|_e| MiddlewareError::QosError)?;
-                }
-                if options.history.is_some() {
-                    qos.set_history(options.history.as_ref().unwrap().clone())
-                        .map_err(|_e| MiddlewareError::QosError)?;
-                } else {
-                    qos.set_history(QosHistory::default())
-                        .map_err(|_e| MiddlewareError::QosError)?;
-                }
+            let qos = subscribe_options_to_cdds_qos(options)?;
     
             let reader = ReaderBuilder::new()
                 .with_qos(qos.into())
@@ -592,7 +509,7 @@ impl Node {
         }
     }
 
-    pub fn subscribe_async<T>(&self) -> Result<Reader<T>, MiddlewareError>
+    pub fn subscribe_async<T>(&self, options: &SubscribeOptions) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
     {
@@ -602,18 +519,30 @@ impl Node {
             }
             assert!(inner.maybe_subscriber.is_some());
 
+            let group = if let Some(group) = options.group.as_ref() {
+                group
+            } else {
+                &inner.group
+            };
+
+            let instance = if let Some(instance) = options.instance.as_ref() {
+                instance
+            } else {
+                &inner.instance
+            };
+
             let topic_builder = TopicBuilder::<T>::new();
 
-            let topic_builder =
-                if let Some(prefix) = Self::get_topic_prefix(&inner.group, &inner.instance) {
-                    topic_builder.with_name_prefix(prefix)
-                } else {
-                    topic_builder
-                };
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(group,instance) {
+                topic_builder.with_name_prefix(prefix)
+            } else {
+                topic_builder
+            };
 
             let topic = topic_builder.create(&inner.participant)?;
 
-            let qos = QosImpl::default();
+            let qos = subscribe_options_to_cdds_qos(options)?;
+            
             let reader = ReaderBuilder::new()
                 .with_qos(qos.into())
                 .as_async()
@@ -1089,3 +1018,4 @@ mod tests {
         .expect("Unable to spin");
     }
 }
+

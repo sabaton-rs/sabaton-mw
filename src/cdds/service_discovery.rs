@@ -37,7 +37,7 @@ pub enum Transport {
 
 /// Create a topic for a service name.
 pub fn service_name_to_topic_name(service_name: &str) -> String {
-    let replaced_dots = service_name.replace(".", "/");
+    let replaced_dots = service_name.replace('.', "/");
     let topic_name = "/service_discovery/default/".to_owned() + replaced_dots.as_str();
 
     debug!("SD topic name for {} is {}", service_name, &topic_name);

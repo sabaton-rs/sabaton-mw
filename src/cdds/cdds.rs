@@ -7,7 +7,7 @@
 
 use cyclonedds_rs::{DdsQos, dds_reliability_kind};
 
-use crate::qos::{QosReliability,Qos, QosError, QosDurability, QosHistory, QosCreate};
+use crate::{qos::{QosReliability,Qos, QosDurability, QosHistory, QosCreate}, SubscribeOptions, error::MiddlewareError, PublishOptions};
 
 
 pub struct CddsQos(DdsQos);
@@ -57,8 +57,64 @@ impl Qos for CddsQos {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<DdsQos> for CddsQos {
     fn into(self) -> DdsQos {
         self.0
     }
+}
+
+
+pub fn subscribe_options_to_cdds_qos(options: &SubscribeOptions) -> Result<CddsQos,MiddlewareError> {
+    let mut qos = CddsQos::create();
+        if options.durability.is_some() {
+            qos.set_durability(options.durability.as_ref().unwrap().clone())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        } else {
+            qos.set_durability(QosDurability::default())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        }
+        if options.reliability.is_some() {
+            qos.set_reliability(options.reliability.as_ref().unwrap().clone())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        } else {
+            qos.set_reliability(QosReliability::default())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        }
+        if options.history.is_some() {
+            qos.set_history(options.history.as_ref().unwrap().clone())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        } else {
+            qos.set_history(QosHistory::default())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        }
+
+        Ok(qos)
+}
+
+pub fn publish_options_to_cdds_qos(options: &PublishOptions) -> Result<CddsQos,MiddlewareError> {
+    let mut qos = CddsQos::create();
+        if options.durability.is_some() {
+            qos.set_durability(options.durability.as_ref().unwrap().clone())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        } else {
+            qos.set_durability(QosDurability::default())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        }
+        if options.reliability.is_some() {
+            qos.set_reliability(options.reliability.as_ref().unwrap().clone())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        } else {
+            qos.set_reliability(QosReliability::default())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        }
+        if options.history.is_some() {
+            qos.set_history(options.history.as_ref().unwrap().clone())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        } else {
+            qos.set_history(QosHistory::default())
+                .map_err(|_e| MiddlewareError::QosError)?;
+        }
+
+        Ok(qos)
 }
