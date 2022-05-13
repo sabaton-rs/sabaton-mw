@@ -40,7 +40,7 @@ pub fn get_service_ids(config:&Path, services : &Vec<& str>) -> Result<Vec<(Stri
 
 // get the path to the service id configuration file
 pub fn get_config_path() -> Result<PathBuf,std::io::Error> {
-    if let Ok(env) = std::env::var(SERVICE_MAPPING_CONFIG_PATH) {
+    if let Ok(env) = std::env::var("SERVICE_MAPPING_CONFIG_PATH") {
         let config_path = PathBuf::from(env);
         if config_path.exists() {
             Ok(config_path)
