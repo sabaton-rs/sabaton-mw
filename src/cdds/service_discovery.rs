@@ -13,6 +13,7 @@ use cdds_derive::Topic;
 use serde_derive::{Serialize, Deserialize};
 use tracing::{debug};
 
+#[repr(C)]
 #[derive(Serialize, Deserialize, Topic, Debug)]
 pub struct ServiceInfo {
     pub node: String,
