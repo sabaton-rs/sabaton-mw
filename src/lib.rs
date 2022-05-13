@@ -364,7 +364,7 @@ impl Node {
         Some(prefix)
     }
 
-    fn advertise_internal<T>(&self, topic_path: &str) -> Result<Writer<T>, MiddlewareError>
+    fn advertise_internal<T>(&self, topic_path: &str, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
     where
         T: TopicType,
     {
@@ -378,8 +378,28 @@ impl Node {
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
 
-            // Use the default Qos
-            let qos = QosImpl::default();
+            let mut qos = QosImpl::create();
+            if options.durability.is_some() {
+                qos.set_durability(options.durability.as_ref().unwrap().clone())
+                    .map_err(|_e| MiddlewareError::QosError)?;
+            } else {
+                qos.set_durability(QosDurability::default())
+                    .map_err(|_e| MiddlewareError::QosError)?;
+            }
+            if options.reliability.is_some() {
+                qos.set_reliability(options.reliability.as_ref().unwrap().clone())
+                    .map_err(|_e| MiddlewareError::QosError)?;
+            } else {
+                qos.set_reliability(QosReliability::default())
+                    .map_err(|_e| MiddlewareError::QosError)?;
+            }
+            if options.history.is_some() {
+                qos.set_history(options.history.as_ref().unwrap().clone())
+                    .map_err(|_e| MiddlewareError::QosError)?;
+            } else {
+                qos.set_history(QosHistory::default())
+                    .map_err(|_e| MiddlewareError::QosError)?;
+            }
 
             let writer = WriterBuilder::new()
                 .with_qos(qos.into())
@@ -521,7 +541,7 @@ impl Node {
         }
     }
 
-    fn subscribe_async_internal<T>(&self, topic_path: &str) -> Result<Reader<T>, MiddlewareError>
+    fn subscribe_async_internal<T>(&self, topic_path: &str,options: &SubscribeOptions,) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
     {
@@ -535,7 +555,29 @@ impl Node {
                 .with_name(topic_path.to_owned())
                 .create(&inner.participant)?;
 
-            let qos = QosImpl::default();
+                let mut qos = QosImpl::create();
+                if options.durability.is_some() {
+                    qos.set_durability(options.durability.as_ref().unwrap().clone())
+                        .map_err(|_e| MiddlewareError::QosError)?;
+                } else {
+                    qos.set_durability(QosDurability::default())
+                        .map_err(|_e| MiddlewareError::QosError)?;
+                }
+                if options.reliability.is_some() {
+                    qos.set_reliability(options.reliability.as_ref().unwrap().clone())
+                        .map_err(|_e| MiddlewareError::QosError)?;
+                } else {
+                    qos.set_reliability(QosReliability::default())
+                        .map_err(|_e| MiddlewareError::QosError)?;
+                }
+                if options.history.is_some() {
+                    qos.set_history(options.history.as_ref().unwrap().clone())
+                        .map_err(|_e| MiddlewareError::QosError)?;
+                } else {
+                    qos.set_history(QosHistory::default())
+                        .map_err(|_e| MiddlewareError::QosError)?;
+                }
+    
             let reader = ReaderBuilder::new()
                 .with_qos(qos.into())
                 .as_async()
@@ -704,7 +746,8 @@ impl Node {
                     let node_name = self.inner.read().unwrap().name.clone();
                     let topic_name = service_name_to_topic_name(&service);
                     let mut sd_publisher = self
-                        .advertise_internal::<ServiceInfo>(&topic_name)
+                        .advertise_internal::<ServiceInfo>(&topic_name, 
+                            PublishOptions::default().with_durability(QosDurability::TransientLocal))
                         .expect("Unable to create topic publisher for SD");
 
                     let (tx, mut rx) = Server::create_notify_channel(2);
@@ -793,7 +836,9 @@ impl Node {
                     let topic_name = service_name_to_topic_name(&name);
                     println!("Starting proxy for {} at {}", &name, &topic_name);
                     let mut sd_subsriber = self
-                        .subscribe_async_internal::<ServiceInfo>(&topic_name)
+                        .subscribe_async_internal::<ServiceInfo>(
+                            &topic_name, 
+                            SubscribeOptions::default().with_durability(QosDurability::TransientLocal))
                         .unwrap();
 
                     // max of 5 instances for a services. TODO: this could be in a config file
@@ -915,7 +960,7 @@ mod tests {
 
     #[test]
     fn host_service() {
-        std::env::set_var(SERVICE_MAPPING_CONFIG_PATH, "services.toml");
+        std::env::set_var("SERVICE_MAPPING_CONFIG_PATH", "services.toml");
         #[service_impl(Example)]
         pub struct EchoServerImpl {}
 
@@ -954,7 +999,7 @@ mod tests {
 
     #[test]
     fn client() {
-        std::env::set_var(SERVICE_MAPPING_CONFIG_PATH, "services.toml");
+        std::env::set_var("SERVICE_MAPPING_CONFIG_PATH", "services.toml");
         tracing_subscriber::fmt::init();
 
         // Client node in separate thread
