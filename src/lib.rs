@@ -5,6 +5,18 @@
     SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-sabaton-commercial
 */
 
+//! The Sabaton Middleware is the interface Sabaton applications
+//! use. 
+//! 
+//! Applications can,
+//! 1. Publish topics
+//! 2. Subscribe to topics
+//! 3. Provide a Service (using SOME/IP)
+//! 4. Access a service via a proxy
+//! 
+//! The Sabaton middleware hides the underlying implementation
+//! of DDS and SOME/IP. 
+//! 
 use async_signals::Signals;
 use async_trait::async_trait;
 use cyclonedds_rs::{
@@ -198,6 +210,10 @@ where
     }
 }
 
+/// All the functionality is implemented in the Node structure. To interact with the other
+/// services of the Sabaton system, a node structure must be created.
+/// The `NodeBuilder` structure provides a builder pattern to create 
+/// the node. A node is cloneable.
 #[derive(Clone)]
 pub struct Node {
     inner: Arc<RwLock<NodeInner>>,
@@ -222,16 +238,23 @@ impl Default for NodeBuilder {
 }
 
 impl NodeBuilder {
+    /// Set the group name of the node. This impacts how topic address are created.
+    /// You normally don't need to change the group.  The default value of the group
+    /// is "default"
     pub fn with_group(mut self, group: String) -> Self {
         self.group = group;
         self
     }
 
+    /// Set the instance of the node. This impacts how topic address are created. 
+    /// The default instance is "0".
     pub fn with_instance(mut self, instance: String) -> Self {
         self.instance = instance;
         self
     }
 
+    /// Just a convenience function to set both the group and instance.
+    #[deprecated]
     pub fn with_group_and_instance(mut self, group: String, instance: String) -> Self {
         self.group = group;
         self.instance = instance;
@@ -239,11 +262,14 @@ impl NodeBuilder {
         self
     }
 
+    /// Use a multi-threaded runtime.
     pub fn multi_threaded(mut self) -> Self {
         self.single_threaded = false;
         self
     }
 
+    /// Number of worker threads to use in the multi-threaded runtime.
+    /// This function will panic if used on a single threaded runtime
     pub fn with_num_workers(mut self, num_workers: usize) -> Self {
         if !self.single_threaded {
             self.num_workers = num_workers;
@@ -253,6 +279,7 @@ impl NodeBuilder {
         }
     }
 
+    /// Create the Node structure
     pub fn build(self, name: String) -> Result<Node, MiddlewareError> {
         let participant = DdsParticipant::create(None, None, None)?;
 
@@ -393,6 +420,7 @@ impl Node {
         }
     }
 
+    /// Advertise a Type to the rest of the system. 
     pub fn advertise<T>(&self, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
     where
         T: TopicType,
