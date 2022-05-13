@@ -62,6 +62,12 @@ impl InitContext {
     }
 }
 
+impl Default for InitContext {
+    fn default() -> Self {
+    Self::new()
+    }
+}
+
 pub struct Writer<T: TopicType> {
     writer: DdsWriter<T>,
 }
@@ -73,7 +79,7 @@ where
     pub fn publish(&mut self, msg: Arc<T>) -> Result<(), MiddlewareError> {
         self.writer
             .write(msg)
-            .map_err(|op| MiddlewareError::DDSError(op))
+            .map_err(MiddlewareError::DDSError)
     }
 
     // Loan a buffer from the stack. This may not be supported always.
@@ -95,7 +101,7 @@ where
     pub fn return_loan(&mut self, buffer: Loaned<T>) -> Result<(), MiddlewareError> {
         self.writer
             .return_loan(buffer.inner)
-            .map_err(|op| MiddlewareError::DDSError(op))
+            .map_err(MiddlewareError::DDSError)
     }
 }
 
@@ -153,10 +159,8 @@ where
     }
 
     pub fn iter(&self) -> impl Iterator<Item = SampleStorage<T>> + '_ {
-        let p = self.samples.iter().filter_map(|p| match p.get_sample() {
-            Some(s) => Some(SampleStorage { sample: s }),
-            None => None,
-        });
+        let p = self.samples.iter()
+            .filter_map(|p| p.get_sample().map(|s| SampleStorage { sample: s }));
         p
     }
 }
@@ -434,7 +438,7 @@ impl Node {
                 &inner.instance
             };
 
-            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&group, &instance) {
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(group, instance) {
                 topic_builder.with_name_prefix(prefix)
             } else {
                 topic_builder
@@ -501,7 +505,7 @@ impl Node {
 
             let topic_builder = TopicBuilder::<T>::new();
 
-            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(&group, &instance) {
+            let topic_builder = if let Some(prefix) = Self::get_topic_prefix(group,instance) {
                 topic_builder.with_name_prefix(prefix)
             } else {
                 topic_builder
@@ -758,7 +762,7 @@ impl Node {
                             if let Some(msg) = rx.recv().await {
                                 match msg {
                                     ConnectionInfo::ConnectionDropped(_i) => {}
-                                    ConnectionInfo::UdpServerSocket(s) => {
+                                    ConnectionInfo::UdpServerSocket(_s) => {
                                         /*   We don't support UDP yet - don't publish UDP SD Message */
                                         //println!("Local UDP socket {:?}", s);
                                         /*
