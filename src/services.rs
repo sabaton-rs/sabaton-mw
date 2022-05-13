@@ -26,7 +26,7 @@ fn load_config(config : &Path) -> Result<ServiceIds,std::io::Error> {
 }
 
 /// Retrieve the service Ids of the services names from the configuration file
-pub fn get_service_ids(config:&Path, services : &Vec<& str>) -> Result<Vec<(String,u16)>, std::io::Error> {
+pub fn get_service_ids(config:&Path, services : &[& str]) -> Result<Vec<(String,u16)>, std::io::Error> {
     let service_ids = load_config(config)?;
     let res : Vec<(String,u16)> = service_ids.services.into_iter().filter_map(|(id,name)| {
         if services.contains(&name.as_str()) {
