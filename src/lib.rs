@@ -759,7 +759,9 @@ impl Node {
                                 match msg {
                                     ConnectionInfo::ConnectionDropped(_i) => {}
                                     ConnectionInfo::UdpServerSocket(s) => {
-                                        println!("Local UDP socket {:?}", s);
+                                        /*   We don't support UDP yet - don't publish UDP SD Message */
+                                        //println!("Local UDP socket {:?}", s);
+                                        /*
                                         let service_info = ServiceInfo {
                                             node: node_name.clone(),
                                             major_version,
@@ -775,6 +777,7 @@ impl Node {
                                             .publish(Arc::new(service_info))
                                             .expect("Unable to publish SD topic");
                                         println!("Published SD packet");
+                                        */
                                     }
                                     ConnectionInfo::TcpServerSocket(s) => {
                                         println!("Local TCP socket {:?}", s);
