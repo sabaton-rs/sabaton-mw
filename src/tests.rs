@@ -4,27 +4,28 @@ use cdds_derive::Topic;
 
 use cyclonedds_rs::*;
 
-use crate::{AsyncReader, NodeBuilder, PublishOptions, Samples, SubscribeOptions, qos::QosReliability};
+use crate::{AsyncReader, NodeBuilder, PublishOptions, Samples, SubscribeOptions};
 
-#[derive(Topic, Deserialize, Serialize)]
+#[derive(Topic, Deserialize, Serialize, Debug)]
 struct SenderType {
     pub msg1: String,
     pub msg2: String,
     pub msg3: Vec<u8>,
     pub inner : Inner,
-
+    pub arr : [String;5],
 }
 
-#[derive(Deserialize, Serialize,Clone)]
+#[derive(Deserialize, Serialize,Clone, Debug)]
 struct Inner {    arr : [u8;16],
 }
 
-#[derive(Topic, Deserialize, Serialize)]
+#[derive(Topic, Deserialize, Serialize, Debug)]
 struct ResponseType {
     pub msg1: String,
     pub msg2 : String,
     pub msg3: Vec<u8>,
     pub inner : Inner,
+    pub arr : [String;5],
 }
 
 #[test]
@@ -51,6 +52,7 @@ fn test_pub_sub_simple() {
                     inner : Inner { 
                         arr: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16] }
                     ,
+                    arr : [String::from("hello"),String::from("workd"),String::from("this"),String::from("is"),String::from("an")]
 
                 };
                 println!("Publishing");
@@ -65,6 +67,8 @@ fn test_pub_sub_simple() {
                 assert_eq!(msg.msg2,"message2".to_owned());
                 assert_eq!(msg.msg3,vec![1,2,3,4,5,6]);
                 assert_eq!(msg.inner.arr,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+                println!("rx array:{:?}", msg.arr);
+                assert_eq!(msg.arr,[String::from("hello"),String::from("workd"),String::from("this"),String::from("is"),String::from("an")]);
 
                 terminate_handle.terminate();
                 //}
@@ -93,6 +97,7 @@ fn test_pub_sub_simple() {
             //loop {
             let num_message = reader.take(&mut samples).await.unwrap();
 
+            let rx = {
             let msg = samples.iter().take(1).next().unwrap();
             println!("Got: {} : {}", msg.msg1, msg.msg2);
             assert_eq!(msg.msg1,"message1".to_owned());
@@ -104,13 +109,19 @@ fn test_pub_sub_simple() {
                 msg2: msg.msg2.clone(),
                 msg3 : msg.msg3.clone(),
                 inner : msg.inner.clone(),
-            });
+                arr : msg.arr.clone(),
+                });
+                rx
+            };
 
             writer.publish(rx).unwrap();
 
 
+            // don't terminate until the tx is done
+            async_std::task::sleep(Duration::from_millis(200)).await;
+
             terminate_handle.terminate();
-            //}
+            
         });
         println!("Rx ended");
     })
