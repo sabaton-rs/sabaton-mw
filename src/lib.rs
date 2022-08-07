@@ -51,6 +51,8 @@ pub mod config;
 pub mod error;
 pub mod qos;
 pub mod services;
+#[cfg(test)]
+mod tests;
 
 pub use cdds::cdds::CddsQos as QosImpl;
 
@@ -698,7 +700,7 @@ impl Node {
 
         debug!("starting tokio main loop");
         // blocking main loop
-        let _result = rt.block_on(async {
+        rt.block_on(async {
             if let Some(services) = maybe_services {
                 for (service, service_id, major_version, minor_version, instance_id, handler) in
                     services
@@ -863,10 +865,16 @@ impl Node {
         debug!("Tokio main loop exited");
         Ok(())
     }
+
+    /// Terminate the processing of the node. The spin function hangs around waiting
+    /// for a SIGINT.
+    pub fn terminate(&self) {
+        unsafe {libc::kill(std::process::id() as i32, libc::SIGINT);}
+    }
 }
 
 #[cfg(test)]
-mod tests {
+mod simple_tests {
     use std::thread;
 
     use super::*;
@@ -957,7 +965,9 @@ mod tests {
 
         node.serve(server).expect("Unable to serve");
 
-        node.spin(|| println!("This is the main function"))
+        let node_cp = node.clone();
+
+        node.spin(move || {println!("This is the main function");node_cp.terminate()})
             .expect("Unable to spin");
     }
 
@@ -975,6 +985,8 @@ mod tests {
             let proxy = client_node
                 .create_proxy::<ExampleProxy>()
                 .expect("Unable to create proxy");
+
+            let node_cp = client_node.clone();
 
             client_node
                 .spin(move || {
@@ -996,6 +1008,7 @@ mod tests {
                             }
                         }
                     });
+                    node_cp.terminate();
                 })
                 .expect("Unable to spin");
             //let cloned = node.clone();
@@ -1033,14 +1046,16 @@ mod tests {
 
         let server = Arc::new(EchoServerImpl {});
 
+        let node_cp = node.clone();
         node.serve(server).expect("Unable to serve");
 
         node.spin(|| {
             tokio::spawn(async move {
                 let mut ticker = tokio::time::interval(Duration::from_millis(100));
-                loop {
-                    let _ = ticker.tick().await;
-                }
+                
+                let _ = ticker.tick().await;
+                node_cp.terminate();
+                
             });
         })
         .expect("Unable to spin");
