@@ -10,12 +10,21 @@ use crate::{AsyncReader, NodeBuilder, PublishOptions, Samples, SubscribeOptions,
 struct SenderType {
     pub msg1: String,
     pub msg2: String,
+    pub msg3: Vec<u8>,
+    pub inner : Inner,
+
+}
+
+#[derive(Deserialize, Serialize,Clone)]
+struct Inner {    arr : [u8;16],
 }
 
 #[derive(Topic, Deserialize, Serialize)]
 struct ResponseType {
     pub msg1: String,
     pub msg2 : String,
+    pub msg3: Vec<u8>,
+    pub inner : Inner,
 }
 
 #[test]
@@ -38,6 +47,11 @@ fn test_pub_sub_simple() {
                 let msg = SenderType {
                     msg1: "message1".to_owned(),
                     msg2: "message2".to_owned(),
+                    msg3 : vec![1,2,3,4,5,6],
+                    inner : Inner { 
+                        arr: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16] }
+                    ,
+
                 };
                 println!("Publishing");
                 writer.publish(Arc::new(msg)).unwrap();
@@ -49,6 +63,8 @@ fn test_pub_sub_simple() {
                 let msg = rx_samples.iter().take(1).next().unwrap();
                 assert_eq!(msg.msg1,"message1".to_owned());
                 assert_eq!(msg.msg2,"message2".to_owned());
+                assert_eq!(msg.msg3,vec![1,2,3,4,5,6]);
+                assert_eq!(msg.inner.arr,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
 
                 terminate_handle.terminate();
                 //}
@@ -86,6 +102,8 @@ fn test_pub_sub_simple() {
             let rx = Arc::new(ResponseType {
                 msg1: msg.msg1.clone(),
                 msg2: msg.msg2.clone(),
+                msg3 : msg.msg3.clone(),
+                inner : msg.inner.clone(),
             });
 
             writer.publish(rx).unwrap();
