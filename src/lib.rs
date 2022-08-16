@@ -469,7 +469,7 @@ impl Node {
     pub fn subscribe<T>(
         &self,
         options: &SubscribeOptions,
-    ) -> Result<impl SyncReader<T>, MiddlewareError>
+    ) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
     {
