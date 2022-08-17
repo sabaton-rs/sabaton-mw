@@ -60,11 +60,14 @@ const SERVICE_MAPPING_CONFIG_PATH: &str = "/etc/sabaton/services.toml";
 
 pub trait SyncReader<T: TopicType> {
     fn take_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
+    fn read_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
+    fn read_1_now(&mut self) -> Result<Arc<T>, MiddlewareError>; 
 }
 
 #[async_trait]
 pub trait AsyncReader<T: TopicType> {
     async fn take(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
+    async fn read(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
 }
 
 #[derive(Clone)]
@@ -194,6 +197,16 @@ where
             .take_now(&mut samples.samples)
             .map_err(|e| e.into())
     }
+    fn read_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
+        self.reader
+            .read_now(&mut samples.samples)
+            .map_err(|e| e.into())
+    }
+
+    fn read_1_now(&mut self) -> Result<Arc<T>, MiddlewareError> {
+        self.reader.read1_now()
+        .map_err(|e| e.into())
+    }
 }
 
 #[async_trait]
@@ -205,6 +218,15 @@ where
         let res = self
             .reader
             .take(&mut samples.samples)
+            .err_into::<MiddlewareError>()
+            .await;
+
+        res
+    }
+    async fn read(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
+        let res = self
+            .reader
+            .read(&mut samples.samples)
             .err_into::<MiddlewareError>()
             .await;
 
@@ -853,7 +875,7 @@ impl Node {
 
             // launch the main function
 
-            tokio::spawn(async move {
+            tokio::task::spawn_blocking( move || {
                 main_function();
             });
 
