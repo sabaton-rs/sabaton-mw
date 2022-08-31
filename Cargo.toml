@@ -29,14 +29,5 @@ fix-hidden-lifetime-bug = "0.2.4"
 interface-example = {git = "https://github.com/sabaton-rs/interface-example.git"}
 tracing-subscriber = "0.3.9"
 
-[patch.crates-io]
-#cyclonedds-rs = { path = "../cyclonedds-rs" }
-#cdds_derive = { path = "../cyclonedds-rs/dds_derive" }
 
-#[patch."https://github.com/sabaton-rs/interface-example.git"]
-#interface-example = {path = "../interface-example"}
-
-#[patch."https://github.com/sjames/someip.git"]
-#someip = {path = "../someip"}
-#someip_derive = {path = "../someip/generator_macros"}
 
