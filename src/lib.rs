@@ -916,7 +916,7 @@ mod simple_tests {
     use serde_derive::Deserialize;
     use serde_derive::Serialize;
     use someip::CallProperties;
-    use someip::{ServerRequestHandlerEntry, ServiceIdentifier, ServiceInstance, ServiceVersion};
+    use someip::*;
     use someip_derive::*;
     #[test]
     fn it_works() {
@@ -955,6 +955,7 @@ mod simple_tests {
     #[test]
     fn host_service() {
         std::env::set_var("SERVICE_MAPPING_CONFIG_PATH", "services.toml");
+
         #[service_impl(Example)]
         pub struct EchoServerImpl {}
 
@@ -970,11 +971,11 @@ mod simple_tests {
             fn set_status(
                 &self,
                 _status: interface_example::ExampleStatus,
-            ) -> Result<(), someip::FieldError> {
+            ) -> Result<(), someip::error::FieldError> {
                 Ok(())
             }
 
-            fn get_status(&self) -> Result<&interface_example::ExampleStatus, someip::FieldError> {
+            fn get_status(&self) -> Result<&ExampleStatus, someip::error::FieldError> {
                 Ok(&ExampleStatus::Ready)
             }
         }
