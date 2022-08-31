@@ -1,13 +1,13 @@
 [package]
 name = "sabaton-mw"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 license = "GPL-3.0 OR LicenseRef-sabaton-commercial"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cyclonedds-rs = "0.4"
+cyclonedds-rs = "0.5"
 cdds_derive = "0.1.1"
 async-std = "1.9.0"
 futures = "0.3"
