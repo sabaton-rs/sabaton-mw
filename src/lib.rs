@@ -248,6 +248,9 @@ pub struct NodeBuilder {
     instance: String,
     num_workers: usize,
     single_threaded: bool,
+    shared_memory : bool,
+    pub_sub_log_level : config::LogLevel,
+    rpc_log_level: config::LogLevel,
 }
 
 impl Default for NodeBuilder {
@@ -257,6 +260,9 @@ impl Default for NodeBuilder {
             instance: "0".to_owned(),
             num_workers: 1,
             single_threaded: true,
+            shared_memory : false,
+            pub_sub_log_level : config::LogLevel::default(),
+            rpc_log_level: config::LogLevel::default(),
         }
     }
 }
@@ -303,8 +309,27 @@ impl NodeBuilder {
         }
     }
 
+    pub fn with_shared_memory(mut self, enabled : bool) -> Self {
+        self.shared_memory = enabled;
+        self
+    }
+
+    pub fn with_pubsub_log_level(mut self, log_level: config::LogLevel) -> Self {
+        self.pub_sub_log_level = log_level;
+        self
+    }
+
+    pub fn with_rpc_log_level(mut self, log_level: config::LogLevel) -> Self {
+        self.rpc_log_level = log_level;
+        self
+    }
+    
+
     /// Create the Node structure
     pub fn build(self, name: String) -> Result<Node, MiddlewareError> {
+        
+        cdds::cdds_config::inject_config_if_allowed(self.shared_memory,self.pub_sub_log_level);
+
         let participant = DdsParticipant::create(None, None, None)?;
 
         let inner = NodeInner {
