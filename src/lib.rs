@@ -61,7 +61,6 @@ const SERVICE_MAPPING_CONFIG_PATH: &str = "/etc/sabaton/services.toml";
 pub trait SyncReader<T: TopicType> {
     fn take_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
     fn read_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError>;
-    fn read_1_now(&mut self) -> Result<Arc<T>, MiddlewareError>; 
 }
 
 #[async_trait]
@@ -170,15 +169,22 @@ where
         }
     }
 
-    pub fn get(&self, index: usize) -> Option<Arc<T>> {
-        let sample = self.samples.get(index).get();
-        sample
-    }
 
+    //pub fn get(&self, index: usize) -> Option<Arc<T>> {
+    //    let sample = self.samples.get(index).get();
+    //    sample
+    //}
+
+    /* 
     pub fn iter(&self) -> impl Iterator<Item = SampleStorage<T>> + '_ {
         let p = self.samples.iter()
             .filter_map(|p| p.get_sample().map(|s| SampleStorage { sample: s }));
         p
+    }
+    */
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+        self.samples.iter()
     }
 }
 
@@ -203,10 +209,6 @@ where
             .map_err(|e| e.into())
     }
 
-    fn read_1_now(&mut self) -> Result<Arc<T>, MiddlewareError> {
-        self.reader.read1_now()
-        .map_err(|e| e.into())
-    }
 }
 
 #[async_trait]
@@ -970,11 +972,11 @@ mod simple_tests {
 
         let mut samples = Samples::<A>::new(2);
         subscriber.take_now(&mut samples).expect("Unable to take");
-        for i in 0..2 {
-            if let Some(a) = samples.get(i) {
-                println!("A -> {}", a.name);
-            }
+
+        for sample in samples.iter() {
+            println!("A -> {}", sample.name);
         }
+        
     }
 
     #[test]
