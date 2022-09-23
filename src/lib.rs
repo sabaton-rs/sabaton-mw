@@ -169,20 +169,6 @@ where
         }
     }
 
-
-    //pub fn get(&self, index: usize) -> Option<Arc<T>> {
-    //    let sample = self.samples.get(index).get();
-    //    sample
-    //}
-
-    /* 
-    pub fn iter(&self) -> impl Iterator<Item = SampleStorage<T>> + '_ {
-        let p = self.samples.iter()
-            .filter_map(|p| p.get_sample().map(|s| SampleStorage { sample: s }));
-        p
-    }
-    */
-
     pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
         self.samples.iter()
     }

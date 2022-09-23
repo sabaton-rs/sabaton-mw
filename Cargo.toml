@@ -7,7 +7,7 @@ license = "GPL-3.0 OR LicenseRef-sabaton-commercial"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cyclonedds-rs = "0.5"
+cyclonedds-rs = "0.6"
 cdds_derive = "0.1.1"
 async-std = "1.9.0"
 futures = "0.3"
