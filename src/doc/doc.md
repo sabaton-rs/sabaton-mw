@@ -31,7 +31,7 @@ For example:
 let node =   
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
 NodeBuilder::default()   
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.build("example-node".to_owned()) 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.build("example-node".to_owned())   
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.expect("Node creation error") 
 
 Th above example, creates a node called "example-node" with default values(mentioned below) for the members of structure "NodeBuilder":
@@ -49,7 +49,7 @@ let node =
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
 NodeBuilder::default()  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.multi_threaded() // Enable this if you want a multi-threaded runtime  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.build("example-node".to_owned()) 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.build("example-node".to_owned())   
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.expect("Node creation error")  
 
 Similarly if you want to change the value of "num_workers" to 2, then you should be using the method called `with_num_workers()` while creating your node as shown below:  
@@ -59,7 +59,7 @@ let node =
 NodeBuilder::default()  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.multi_threaded() // Enable this if you want a multi-threaded runtime  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.with_num_workers(2) // Number of work threads. Fixed to 1 for single threaded runtime.    
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.build("example-node".to_owned()) 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.build("example-node".to_owned())   
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.expect("Node creation error") 
 
 You ca explore more on the different methods available for `NodeBuilder` in the following link:
