@@ -73,7 +73,7 @@ https://github.com/sabaton-rs/diagnostic-manager/blob/bb1d953d0970ac1bbccb3004e3
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
 
-<img src="/home/sabaton/workspace/sabaton-mw/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism" style="height: 300px; width:300px;"/>
+<img src="/Publisher_subscriber.png" alt="Publisher subscriber mechanism" style="height: 300px; width:300px;"/>
 
 Vehicle-signal crate generates the DDS Topic types for use in an automotive platform. 
 Please have a look into the crate before proceeding:
