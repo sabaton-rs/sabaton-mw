@@ -1,5 +1,5 @@
 
-# <div style="color:red"> Creating a sabaton node and publishing a simple topic from the vehicle-signal crate </div>
+# <div style="color:red"> Creating a sabaton node and publishing a topic from the vehicle-signal crate </div>
 This document will help you to create a sabaton Node and publish a sample topic from a vehicle-signal crate.
 
 
@@ -65,10 +65,47 @@ NodeBuilder::default()
 You ca explore more on the different methods available for `NodeBuilder` in the following link:
 https://github.com/sabaton-rs/sabaton-mw/blob/61b677ec262b53f52a3e1557775c61228535e2a5/src/lib.rs#L234
 
+
 If you are looking for an example implementation for creating a node, please refer to the following link:
 https://github.com/sabaton-rs/diagnostic-manager/blob/bb1d953d0970ac1bbccb3004e3a4292e1b6627dd/src/lib.rs#L22
 
+### <b> Pub/Sub Messaging?</b>
+
+Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
+
+<img src="/home/sabaton/workspace/sabaton-mw/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism" style="height: 300px; width:300px;"/>
+
+Vehicle-signal crate generates the DDS Topic types for use in an automotive platform. 
+Please have a look into the crate before proceeding:
+https://doc.sabaton.dev/public/doc/vehicle_signals/index.html
+
+You can also have a look into the different possible topics which can be published:
+https://doc.sabaton.dev/public/doc/vehicle_signals/v2/vehicle/index.html
+
+In a nutshell, to broadcast a message, publisher node simply pushes a message to the topic.All nodes that had subscribed to the topic will receive every message that is broadcast.
+
 ### <b> How to publish a topic?</b>
+
+Follow the below mentioned steps to publish a topic:
+
+1. Use `advertise()` which is a method available within the context of the structure `Node`. This method basically returns a writer for the topic of your choice which can be used to push a message to the chosen topic.
+For example, if you want to publish the topic "Speed", then you can use `advertise()` in the following manner:
+  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let mut SpeedWriter= <name of node>.advertise::<v2::vehicle::Speed>().expect("Unable to advertise");  
+
+2. Use `publish()` on writer returned by `advertise()` to push a message to a given topic as shown below:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let speed = Arc::new(Speed::new(KilometrePerHour(10.0), None).unwrap());  //Message to be pushed
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let mut res = SpeedWriter.publish(speed.clone());
+
+Please refer to the following link to see an example implementation for publishing a topic:
+https://github.com/sabaton-rs/demo_pub/blob/a15df007e6f89f713acc8bbed41b546facf67c83/src/lib.rs#L25
+
+
+
+
+
+
+
 
 
 
