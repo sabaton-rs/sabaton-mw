@@ -14,6 +14,8 @@ Sabaton nodes are applications that interact with the rest of the system using d
 Nodes will use the functionality of Sabaton Middleware to achieve the above. 
 ### <b> How to create a sabaton node?</b>
 
+#### Using Default trait implementation of NodeBuilder
+
  The `NodeBuilder` structure provides a builder pattern to create the node.
 ```rust  
 pub struct NodeBuilder {
@@ -44,7 +46,7 @@ The above example, creates a node called "example-node" with default values(ment
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pub_sub_log_level : 2,  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rpc_log_level: 2,  
 
-If you want to change the default values, different methods are available within the context of the structure `NodeBuilder`.  The first parameter of a method will be always self, which represents the calling instance of the structure. Methods operate on the data members of a structure. For example, if you want to make "single_threaded" as false, then use the method called `multi_threaded()` as shown below:
+If you want to change the default values, different methods are available within the context of the structure `NodeBuilder`. For example, if you want to make "single_threaded" as false, then use the method called `multi_threaded()` as shown below:
 ```rust
 let node =  
  
@@ -70,7 +72,17 @@ https://github.com/sabaton-rs/sabaton-mw/blob/61b677ec262b53f52a3e1557775c612285
 If you are looking for an example implementation for creating a node, please refer to the following link:
 https://github.com/sabaton-rs/diagnostic-manager/blob/bb1d953d0970ac1bbccb3004e3a4292e1b6627dd/src/lib.rs#L22
 
-### <b> Pub/Sub Messaging?</b>
+#### Using cargo-generate
+
+Please follow the below mentioned steps to create template for a Sabaton node using cargo-generate:
+1. Install cargo-generate :   
+cargo install cargo-generate
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Installing cargo generate" style="height: 500px; width:500px;"/>
+
+2.  Use cargo generate to create a node:  
+cargo generate --git https://github.com/sabaton-rs/node-template.git  
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/cargo_generate.png" alt="Node creation" style="height: 500px; width:500px;"/>
+### <b> Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
 
