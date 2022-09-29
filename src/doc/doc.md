@@ -14,7 +14,7 @@ Sabaton nodes are applications that interact with the rest of the system using d
 Nodes will use the functionality of Sabaton Middleware to achieve the above. 
 ### <b> How to create a sabaton node?</b>
 
-#### Using Default trait implementation of NodeBuilder
+#### Using Default trait implementation for NodeBuilder
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
 ```rust  
@@ -87,7 +87,7 @@ cargo generate --git https://github.com/sabaton-rs/node-template.git
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
 
-<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism" style="height: 500px; width:500px;"/>
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism";/>
 
 Vehicle-signal crate generates the DDS Topic types for use in an automotive platform. 
 Please have a look into the crate before proceeding:
