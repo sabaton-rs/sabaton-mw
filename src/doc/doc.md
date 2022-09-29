@@ -15,16 +15,17 @@ Nodes will use the functionality of Sabaton Middleware to achieve the above.
 ### <b> How to create a sabaton node?</b>
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
-
- pub struct NodeBuilder {  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instance,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num_workers,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;single_threaded,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shared_memory,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pub_sub_log_level,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rpc_log_level,  
+```rust  
+pub struct NodeBuilder {
+    group: String,
+    instance: String,
+    num_workers: usize,
+    single_threaded: bool,
+    shared_memory : bool,
+    pub_sub_log_level : config::LogLevel,
+    rpc_log_level: config::LogLevel,
 }
+```
 
 We can create a node using the "Default" trait implementation for structure NodeBuilder.
 For example:
@@ -34,14 +35,14 @@ NodeBuilder::default()
 .build("example-node".to_owned())   
 .expect("Node creation error") 
 ```
-The above example, creates a node called "example-node" with default values(mentioned below) for the members of structure "NodeBuilder":
-    group: "default",
-    instance: "0",
-    num_workers: 1,
-    single_threaded: true,
-    shared_memory : false,
-    pub_sub_log_level : 2,
-    rpc_log_level: 2,
+The above example, creates a node called "example-node" with default values(mentioned below) for the members of structure "NodeBuilder":  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group: "default",  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instance: "0",  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num_workers: 1,  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;single_threaded: true,  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shared_memory : false,  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pub_sub_log_level : 2,  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rpc_log_level: 2,  
 
 If you want to change the default values, different methods are available within the context of the structure `NodeBuilder`.  The first parameter of a method will be always self, which represents the calling instance of the structure. Methods operate on the data members of a structure. For example, if you want to make "single_threaded" as false, then use the method called `multi_threaded()` as shown below:
 ```rust
