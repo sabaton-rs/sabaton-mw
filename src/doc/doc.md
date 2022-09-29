@@ -81,7 +81,7 @@ cargo install cargo-generate
 
 2.  Use cargo generate to create a node:  
 cargo generate --git https://github.com/sabaton-rs/node-template.git  
-<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation" style="height: 300px; width:350px;"/>
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation"/>
 ### <b> Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
