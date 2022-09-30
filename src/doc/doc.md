@@ -182,7 +182,7 @@ interface-example = { git = "https://github.com/sabaton-rs/interface-example.git
 
 2. The service which is defined in `interface-example` crate is as shown below:
 
-```{.rust .numberLines}
+```rust numberLines
 #[service(name("dev.sabaton.ExampleInterface"),
     version(1,0),
     fields([1]status:ExampleStatus)
