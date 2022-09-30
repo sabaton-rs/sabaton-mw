@@ -184,7 +184,7 @@ pub enum ExampleError {
 }
 ```
 
-Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example).  Name of service is "dev.sabaton.ExampleInterface". The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
+Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
 
 In the above example only 1 feild (ExampleStatus) is used. If you want to use more events and methods you can modify your interface definition. For example:
 
@@ -198,7 +198,7 @@ In the above example only 1 feild (ExampleStatus) is used. If you want to use mo
 ```
 
 But for the time being, let us stick on to the inerface defined in `interface-example`.
-We will now try to add the service define in `interface-example` to an application.
+We will now try to add the service defined in `interface-example` to an application.
 
 ### 2.2.1 Steps to be followed
 
