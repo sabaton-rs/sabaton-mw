@@ -1,9 +1,9 @@
 
-# <div style="color:red">1.  Creating a sabaton node and publishing a topic from the vehicle-signal crate </div>
+# <div style="color:red">  Creating a sabaton node and publishing a topic from the vehicle-signal crate </div>
 
 This document will help you to create a sabaton Node and publish a sample topic from a vehicle-signal crate.
 
-## <div style="color:blue">1.1 Sabaton Node </div>
+## <div style="color:blue">1. Sabaton Node </div>
 
 Sabaton nodes are applications that interact with the rest of the system using data topics and/or interfaces. Nodes may,
 
@@ -14,9 +14,9 @@ Sabaton nodes are applications that interact with the rest of the system using d
 
 Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
-### <b> How to create a sabaton node?</b>
+### <b>1.1 How to create a sabaton node?</b>
 
-#### 1.1.1 Using Default trait implementation for NodeBuilder
+#### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
 
@@ -84,7 +84,7 @@ If you are looking for an example implementation for creating a node, please ref
 
 Please follow the below mentioned steps to create template for a Sabaton node using cargo-generate:
 
-1. Install cargo-generate :
+1. Install cargo-generate :  
 cargo install cargo-generate
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/cargo_generate.png" alt="Installing cargo generate;"/>
 
@@ -138,51 +138,13 @@ SOME/IP is a middleware solution that enables service-oriented communication bet
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SOMEIP.png" alt="SOME/IP.png;"/>
 
-The services are a combination of fields, events, and/or methods. The Server ECU provides a service instance which implements a service interface. The client ECU can use this service instance using SOME/IP to request the required data from the server.
+The Server ECU provides a service instance which implements a service interface. The client ECU can use this service instance using SOME/IP to request the required data from the server.
 
-### <b> 2.2 How to add service to an application? </b>
+## <b> 2.2 How to add service to an application? </b>
 
-For adding service to an application we use the following crate:
+ Let us use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application. Default node uses a crate called `interface-example` where a service is already defined for you. The service which is defined in `interface-example` crate is as shown below:
 
-<https://github.com/sjames/someip>
-
-Interfaces are defined by using traits and a derive macro.  
-Here is how you would define a service:
-
-```rust
-    #[service(
-        name("org.hello.service"),
-        fields([1]value1:Field1,[2]value2:String, [3]value3: u32),
-        events([1 ;10]value1:Event1, [2;10]value2:String, [3;10]value3: u32), 
-        method_ids([2]echo_string, [3]no_reply),
-        method_ids([5]echo_struct)
-    )]
-    #[async_trait]
-    pub trait EchoServer {
-        fn echo_int(&self, value: i32) -> Result<i32, EchoError>;
-        async fn echo_string(&self, value: String) -> Result<String, EchoError>;
-        fn no_reply(&self, value: Field1);
-        fn echo_u64(&self, value: u64) -> Result<u64, EchoError>;
-        fn echo_struct(&self, value : Field1) -> Result<Field1, EchoError>;
-    }
-```
-
- Let us use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application. We will now try to add a service to the application.
-
-### Steps to be followed
-
-1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
-
-```rust
-someip = {git = "https://github.com/sjames/someip.git"}
-someip_derive = {git = "https://github.com/sjames/someip.git"}
-
-interface-example = { git = "https://github.com/sabaton-rs/interface-example.git"}
-```
-
-2. The service which is defined in `interface-example` crate is as shown below:
-
-```{.rust .numberLines} 
+```rust numberLines
 #[service(name("dev.sabaton.ExampleInterface"),
     version(1,0),
     fields([1]status:ExampleStatus)
@@ -221,3 +183,65 @@ pub enum ExampleError {
     Unknown,
 }
 ```
+
+Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example).  Name of service is "dev.sabaton.ExampleInterface". The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
+
+In the above example only 1 feild (ExampleStatus) is used. If you want to use more events and methods you can modify your interface definition. For example:
+
+```rust
+#[service(name("dev.sabaton.ExampleInterface"),
+    version(1,0),
+    fields([1]status:ExampleStatus),
+     events([1 ;10]value1:String, [2;10]value2:String, [3;10]value3: u32), 
+        method_ids([2]echo),
+)]
+```
+
+But for the time being, let us stick on to the inerface defined in `interface-example`.
+We will now try to add the service define in `interface-example` to an application.
+
+### 2.2.1 Steps to be followed
+
+1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
+
+```rust
+someip = {git = "https://github.com/sjames/someip.git"}
+someip_derive = {git = "https://github.com/sjames/someip.git"}
+
+interface-example = { git = "https://github.com/sabaton-rs/interface-example.git"}
+```
+
+2. Implement the trait(In this case "Example") acording to your requirements in your application. Please find an example implementation of the trait:
+
+```rust
+#[service_impl(Example)]
+pub struct EchoServerImpl {}
+
+impl ServiceInstance for EchoServerImpl {}
+impl ServiceVersion for EchoServerImpl {}
+
+#[async_trait]
+    impl Example for EchoServerImpl {
+        async fn echo(&self, data: String) -> Result<EchoResponse, ExampleError> {
+            println!("Echo is called");
+            Ok( EchoResponse {
+                echo : data,
+            })
+        }
+
+        fn set_status(
+            &self,
+            _status: ExampleStatus,
+        ) -> Result<(), someip::error::FieldError> {
+            Ok(())
+        }
+
+        fn get_status(&self) -> Result<&ExampleStatus, someip::error::FieldError> {
+            Ok(&ExampleStatus::Ready)
+        } 
+    } 
+```
+
+As you can see from the above code, `echo()`function of the trait   `Example` is implemented for the structure `EchoServerImpl`. Now your application will act as a server.  A client application can use a service instance to get the required data (fields, events, and methods) from the server. API called `get_status()` can be used by the client for querying `ExampleStatus` and `set_status()` can be used by the client to change/modify `ExampleStatus`. 
+
+
