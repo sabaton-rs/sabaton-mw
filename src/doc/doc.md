@@ -155,6 +155,8 @@ let mut moving = Samples::<IsMoving>::new(1);
                 };
 ```
 
+Please refer to the following link to see an example implementation for subscribibg a topic: https://github.com/sabaton-rs/demo_sub/blob/be46d6cff83434a5ab1e4d27e80b0b067105b54c/src/lib.rs#L18
+
 # <div style="color:red">2. Creating your own topic library crate </div>
 
 1. Add `cdds_derive` crate into your Cargo.toml file.
@@ -196,6 +198,8 @@ let node = NodeBuilder::default()
         let publish_options = PublishOptions::default();
         let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
 ```
+For better understanding refer to the follwing code :
+https://github.com/sabaton-rs/sabaton-mw/blob/main/src/tests.rs
 
 # <div style="color:red"> 3. How to use a service in an application </div>
 
@@ -400,4 +404,4 @@ impl Default for UpdateStatus {
 ```
 
 3. Build the interface code.
-4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#221-steps-to-be-followed) and its ready to use
+4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use
