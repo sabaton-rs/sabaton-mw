@@ -1,7 +1,6 @@
-
 # <div style="color:red">  Creating a sabaton node and publishing a topic from the vehicle-signal crate </div>
 
-This document will help you to create a sabaton Node and publish a sample topic from a vehicle-signal crate.
+This topic will help you to create a sabaton Node and publish a sample topic from vehicle-signal crate.
 
 ## <div style="color:blue">1. Sabaton Node </div>
 
@@ -128,11 +127,81 @@ let mut res = SpeedWriter.publish(speed.clone());
 Please refer to the following link to see an example implementation for publishing a topic:
 <https://github.com/sabaton-rs/demo_pub/blob/a15df007e6f89f713acc8bbed41b546facf67c83/src/lib.rs#L25>
 
-# <div style="color:red"> 2. Adding a service to an application </div>
+### <b> 1.2.2 How to subscribe to a topic?</b>  
+
+Follow the below mentioned steps to subscribe a topic:  
+
+1. You can use  `subscribe()`, `subscribe_async()` or `subscribe_async_internal()` within the context of a node to subscribe to a topic. For instance, if you want to subscribe to a topic called `IsMoving`(in `vehicle-signals` crate),you can refer to the following implementation :
+
+```rust
+let mut Moving_reader= node.subscribe_async::<v2::vehicle::IsMoving>().expect("Unable to advertise");
+```
+
+2. Create an instance of the topic which you want to subscribe to. For example, you can create an instance of topic `IsMoving` if you want to subscribe to the same:
+
+```rust
+let mut moving = Samples::<IsMoving>::new(1);
+```
+
+3. Use the reader created in step #1 to read the values of the subscribed topics as shown below:
+
+```rust
+ let currentmoving:bool=if let Ok(res) = Moving_reader.take(&mut moving).await
+                {   
+                    *(moving.get(0).unwrap().value())
+                }
+                else{
+                   true
+                };
+```
+
+# <div style="color:red">2. Creating your own topic library crate </div>
+
+1. Add `cdds_derive` crate into your Cargo.toml file.
+2. Import procedural macro called `Topic` in your file:
+
+```rust
+   use cdds_derive::Topic;
+```
+
+3. Derive `Topic` before defining your topic. For example:
+
+```rust
+#[derive(Topic, Deserialize, Serialize, Debug)]
+struct SenderType {
+    pub msg1: String,
+    pub msg2: String,
+    pub msg3: Vec<u8>,
+    pub inner : Inner,
+    pub arr : [String;5],
+}
+```
+
+As per the above implementation, `SenderType` is the name of the topic.
+
+```rust
+let node = NodeBuilder::default()
+            .build("testnode".to_string())
+            .unwrap();
+        let publish_options = PublishOptions::default();
+        let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
+```
+
+You can publish or subscribe to the topic as explained in [section 1.2.1 and 1.2.2](#b-121-how-to-publish-a-topicb). For instance:
+
+```rust
+let node = NodeBuilder::default()
+            .build("testnode".to_string())
+            .unwrap();
+        let publish_options = PublishOptions::default();
+        let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
+```
+
+# <div style="color:red"> 3. How to use a service in an application </div>
 
 Before moving on to the steps to add service to an application, lets brush through the concept(SOME/IP) using which we do the same
 
-## <div style="color:blue"> 2.1 SOME/IP </div>
+## <div style="color:blue"> 3.1 SOME/IP </div>
 
 SOME/IP is a middleware solution that enables service-oriented communication between the control units.
 
@@ -140,9 +209,11 @@ SOME/IP is a middleware solution that enables service-oriented communication bet
 
 The Server ECU provides a service instance which implements a service interface. The client ECU can use this service instance using SOME/IP to request the required data from the server.
 
-## <b> 2.2 How to add service to an application? </b>
+## <b> 3.2 Service </b>
 
- Let us use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application. Default node uses a crate called `interface-example` where a service is already defined for you. The service which is defined in `interface-example` crate is as shown below:
+Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
+
+Let us use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application. Default node uses a crate called `interface-example` where a service is already defined for you. The service which is defined in `interface-example` crate is as shown below:
 
 ```rust numberLines
 #[service(name("dev.sabaton.ExampleInterface"),
@@ -184,8 +255,6 @@ pub enum ExampleError {
 }
 ```
 
-Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
-
 In the above example only 1 feild (ExampleStatus) is used. If you want to use more events and methods you can modify your interface definition. For example:
 
 ```rust
@@ -200,7 +269,7 @@ In the above example only 1 feild (ExampleStatus) is used. If you want to use mo
 But for the time being, let us stick on to the inerface defined in `interface-example`.
 We will now try to add the service defined in `interface-example` to an application.
 
-### 2.2.1 Steps to be followed
+### 3.2.1 <b> How to add service in a Server application?</b>
 
 1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
 
@@ -241,12 +310,13 @@ impl ServiceVersion for EchoServerImpl {}
     } 
 ```
 
-As you can see from the above code, `echo()`function of the trait   `Example` is implemented for the structure `EchoServerImpl`. Now your application will act as a server.  A client application can use a service instance to get the required data (fields, events, and methods) from the server. API called `get_status()` can be used by the client for querying `ExampleStatus` and `set_status()` can be used by the client to change/modify `ExampleStatus`. 
+As you can see from the above code, `echo()`function of the trait   `Example` is implemented for the structure `EchoServerImpl`. Now your application will act as a server.  A client application can use a service instance to get the required data (fields, events, and methods) from the server. API called `get_status()` can be used by the client for querying `ExampleStatus` and `set_status()` can be used by the client to change/modify `ExampleStatus`.
 
-### <b> 2.3 How to write a client application? </b>
+### <b> 3.2.2 How to utilise a service in a Client application? </b>
 
-Let us again use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application.  
-### 2.2.1 Steps to be followed
+Let us again use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our client application.  
+
+### <b> Steps to be followed </b>
 
 1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
 
@@ -270,8 +340,7 @@ let mut node = NodeBuilder::default()
 
 3. If you want your application to display the reply from server, use the echo() function as shown below:
 
-
-```rust     
+```rust
 let call_properties = CallProperties::with_timeout(Duration::from_millis(15000));
 
                 match client_proxy
@@ -288,5 +357,47 @@ let call_properties = CallProperties::with_timeout(Duration::from_millis(15000))
                 }
 
 ```
+
 An example of a communication between a server(Left side image) and a client(Right side image) is shown below:  
-<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/server_client.png"   alt="server_client;"/>
+
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/server_client.png"   alt="server_client;"/>  
+
+# <div style="color:red"> 4. Creating your own interface library crate </div>
+
+Until now we were using the default interface implementation called `interface-example`. But how to define an interface by your own and use the same in your applications. Please follow the steps below to create your own interface:
+
+1. Clone the default interface implementation into your local repositry using the command :  
+   git clone <https://github.com/sabaton-rs/interface-example.git>
+
+2. Modify/add new services as per your requirments.
+ Let us now see an example implementation:  
+
+```rust
+#[service(name("dev.sabaton.SoftwareUpdate"),
+    version(1,0),
+    fields([1]status:UpdateStatus),
+)]
+#[async_trait]
+pub trait Example {
+    async fn start_update(&self, data: String) -> Result<UpdateStatusResponse, ErrorStatus>;
+    
+}
+#[derive(Serialize, Deserialize,Clone, Default)]
+pub struct UpdateStatusResponse  {
+    pub echo : String,
+}
+#[derive(Serialize, Deserialize,Clone)]
+pub enum UpdateStatus  {
+    Starting,
+    Ready,
+}
+
+impl Default for UpdateStatus {
+    fn default() -> UpdateStatus {
+        Self::Starting
+    }
+}
+```
+
+3. Build the interface code.
+4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#221-steps-to-be-followed) and its ready to use
