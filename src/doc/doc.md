@@ -205,9 +205,8 @@ We will now try to add the service defined in `interface-example` to an applicat
 1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
 
 ```rust
-someip = {git = "https://github.com/sjames/someip.git"}
-someip_derive = {git = "https://github.com/sjames/someip.git"}
-
+someip = "0.1.0"
+someip_derive = "0.1.0"
 interface-example = { git = "https://github.com/sabaton-rs/interface-example.git"}
 ```
 
@@ -244,4 +243,50 @@ impl ServiceVersion for EchoServerImpl {}
 
 As you can see from the above code, `echo()`function of the trait   `Example` is implemented for the structure `EchoServerImpl`. Now your application will act as a server.  A client application can use a service instance to get the required data (fields, events, and methods) from the server. API called `get_status()` can be used by the client for querying `ExampleStatus` and `set_status()` can be used by the client to change/modify `ExampleStatus`. 
 
+### <b> 2.3 How to write a client application? </b>
 
+Let us again use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application.  
+### 2.2.1 Steps to be followed
+
+1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
+
+```rust
+someip = "0.1.0"
+someip_derive = "0.1.0"
+interface-example = { git = "https://github.com/sabaton-rs/interface-example.git"}
+```
+
+2. Default node template creates a default node(in this case `node`) for you (Using `NodeBuilder`). Create a client proxy be using `create_proxy` method as shown below:
+
+```rust
+let mut node = NodeBuilder::default()
+        .build("example-node".to_owned())
+        .expect("Node creation error");
+
+    let client_proxy = node
+            .create_proxy::<ExampleProxy>()
+            .expect("Unable to create proxy");
+```
+
+3. If you want your application to display the reply from server, use the echo() function as shown below:
+
+
+```rust     
+let call_properties = CallProperties::with_timeout(Duration::from_millis(15000));
+
+                match client_proxy
+                    .echo("Hello".to_string(), &call_properties)
+                    .await
+                {
+                    Ok(res) => {
+                        println!("Reply from server: {}", res.echo);
+                    }
+                    Err(e) => {
+                        println!("Error:{:?}", e);
+                        panic!("Echo response failed");
+                    }
+                }
+
+```
+An example of a communication between a server(Left side image) and a client(Right side image) is shown below:  
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/server_client.png"   alt="server_client;"/>
