@@ -19,17 +19,6 @@ Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
 
-```rust  
-pub struct NodeBuilder {
-    group: String,
-    instance: String,
-    num_workers: usize,
-    single_threaded: bool,
-    shared_memory : bool,
-    pub_sub_log_level : config::LogLevel,
-    rpc_log_level: config::LogLevel,
-}
-```
 
 We can create a node using the "Default" trait implementation for structure NodeBuilder.
 For example:
@@ -41,16 +30,9 @@ NodeBuilder::default()
 .expect("Node creation error") 
 ```
 
-The above example, creates a node called "example-node" with default values(mentioned below) for the members of structure "NodeBuilder":  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;group: "default",  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instance: "0",  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num_workers: 1,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;single_threaded: true,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shared_memory : false,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pub_sub_log_level : 2,  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rpc_log_level: 2,  
+The above example, creates a node called "example-node" with default values for the members of structure "NodeBuilder". 
 
-If you want to change the default values, different methods are available within the context of the structure `NodeBuilder`. For example, if you want to make "single_threaded" as false, then use the method called `multi_threaded()` as shown below:
+If you want to change the default values, different methods are available within the context of the structure `NodeBuilder`. For example, if you want to make "single_threaded" as false(default is true), then use the method called `multi_threaded()` as shown below:
 
 ```rust
 let node =  
@@ -61,7 +43,7 @@ NodeBuilder::default()
 .expect("Node creation error")  
 ```
 
-Similarly if you want to change the value of "num_workers" to 2, then you should be using the method called `with_num_workers()` while creating your node as shown below:  
+Similarly if you want to change the value of "num_workers" to 2(default is 1), then you should be using the method called `with_num_workers()` while creating your node as shown below:  
 
 ```rust
 let node =  
@@ -77,14 +59,14 @@ You ca explore more on the different methods available for `NodeBuilder` in the 
 <https://github.com/sabaton-rs/sabaton-mw/blob/61b677ec262b53f52a3e1557775c61228535e2a5/src/lib.rs#L234>
 
 If you are looking for an example implementation for creating a node, please refer to the following link:
-<https://github.com/sabaton-rs/diagnostic-manager/blob/bb1d953d0970ac1bbccb3004e3a4292e1b6627dd/src/lib.rs#L22>
+<https://github.com/sabaton-rs/sabaton-mw/blob/6ee05cf9a54e6267f3b3e9ee1f95ff4d5500c4d3/src/tests.rs#L34>
 
 #### <b> 1.1.2 Using cargo-generate </b>
 
 Please follow the below mentioned steps to create template for a Sabaton node using cargo-generate:
 
 1. Install cargo-generate :  
-cargo install cargo-generate
+cargo install cargo-generate  
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/cargo_generate.png" alt="Installing cargo generate;"/>
 
 2. Use cargo generate to create a node:  
@@ -131,7 +113,7 @@ Please refer to the following link to see an example implementation for publishi
 
 Follow the below mentioned steps to subscribe a topic:  
 
-1. You can use  `subscribe()`, `subscribe_async()` or `subscribe_async_internal()` within the context of a node to subscribe to a topic. For instance, if you want to subscribe to a topic called `IsMoving`(in `vehicle-signals` crate),you can refer to the following implementation :
+1. You can use  `subscribe()` or `subscribe_async()` within the context of a node to subscribe to a topic. For instance, if you want to subscribe to a topic called `IsMoving`(in `vehicle-signals` crate),you can refer to the following implementation :
 
 ```rust
 let mut Moving_reader= node.subscribe_async::<v2::vehicle::IsMoving>().expect("Unable to advertise");
@@ -155,7 +137,7 @@ let mut moving = Samples::<IsMoving>::new(1);
                 };
 ```
 
-Please refer to the following link to see an example implementation for subscribibg a topic: https://github.com/sabaton-rs/demo_sub/blob/be46d6cff83434a5ab1e4d27e80b0b067105b54c/src/lib.rs#L18
+Please refer to the following link to see an example implementation for subscribing a topic: https://github.com/sabaton-rs/demo_sub/blob/be46d6cff83434a5ab1e4d27e80b0b067105b54c/src/lib.rs#L18
 
 # <div style="color:red">2. Creating your own topic library crate </div>
 
