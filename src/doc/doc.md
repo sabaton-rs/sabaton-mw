@@ -388,7 +388,7 @@ impl Default for UpdateStatus {
 3. Build the interface code.
 4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use.
 
-# <div style="color:red">  Shared memory transport </div>
+# <div style="color:red"> 5. Shared memory transport </div>
 
 The shared memory (SHM) transport enables fast communications between entities running in the same processing unit/machine, relying on the shared memory mechanisms provided by the host operating system.
 
@@ -412,7 +412,7 @@ Important thing to note here is that memory is allocated by a pool manager and n
 
 CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using https://github.com/eclipse-iceoryx/iceoryx) concept instead of serializing to a network.
 
-## <b> How to publish a topic? </b>
+## <b> 5.1 How to publish a topic? </b>
 
 1. Create a node and enable `shared_memory` as shown below:
 
@@ -474,7 +474,7 @@ Please refer to the following link for more details:
 https://github.com/sabaton-rs/v4l2-capture-node/blob/928cd844efdb8672288a9ab86e14bb68232c60f1/src/lib.rs
 
 
-## <b> How to subscribe to a topic? </b>
+## <b> 5.2 How to subscribe to a topic? </b>
 
 1. Create a node and enable `shared_memory` as shown below:
 
