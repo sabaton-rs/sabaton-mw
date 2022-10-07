@@ -405,9 +405,7 @@ iceoryx is an inter-process-communication (IPC) middleware for various operating
 5. Subscriber then uses the handle to access the data. 
 6. Finally, subscriber frees the handle which then goes back to the pool.
 
-## Video
-<video src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SMT.webm" controls="controls" style="max-width: 730px;">
-</video>
+[SMT.webm](https://user-images.githubusercontent.com/102716966/194551842-291a3217-cebd-4cce-a4fd-6b398f525c5e.webm)
 
 
 
