@@ -392,7 +392,7 @@ impl Default for UpdateStatus {
 
 The shared memory (SHM) transport enables fast communications between entities running in the same processing unit/machine, relying on the shared memory mechanisms provided by the host operating system.
 
-<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SOMEIP.png" alt="shared_memory.png;"/>
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/shared_memory.png" alt="shared_memory.png;"/>
 
 We can implement the concept of shared memory using iceoryx and cyclone-dds.
 
@@ -405,7 +405,7 @@ iceoryx is an inter-process-communication (IPC) middleware for various operating
 5. Subscriber then uses the handle to access the data. 
 6. Finally, subscriber frees the handle which then goes back to the pool.
 
-
+## Video
 <video src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SMT.webm" controls="controls" style="max-width: 730px;">
 </video>
 
