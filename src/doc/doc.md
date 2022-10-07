@@ -406,7 +406,7 @@ iceoryx is an inter-process-communication (IPC) middleware for various operating
 6. Finally, subscriber frees the handle which then goes back to the pool.
 
 
-## Video  
+
 
 
 
