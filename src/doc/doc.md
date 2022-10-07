@@ -386,4 +386,27 @@ impl Default for UpdateStatus {
 ```
 
 3. Build the interface code.
-4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use
+4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use.
+
+# <div style="color:red">  Shared memory transport </div>
+
+The shared memory (SHM) transport enables fast communications between entities running in the same processing unit/machine, relying on the shared memory mechanisms provided by the host operating system.
+
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SOMEIP.png" alt="shared_memory.png;"/>
+
+We can implement the concept of shared memory using iceoryx and cyclone-dds.
+
+
+iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload.   
+1. A memory pool is created out of publisher and subscriber.   
+2. Publisher sends a request to pool manager for a shared memory region. 
+3. Then pool manager gives a handle. 
+4. Publisher will put data into the given loaction and will give handle to subscriber. 
+5. Subscriber then uses the handle to access the data. 
+6. Finally, subscriber frees the handle which then goes back to the pool.
+
+
+## Video  
+
+
+
