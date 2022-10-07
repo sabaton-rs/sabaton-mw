@@ -394,18 +394,106 @@ The shared memory (SHM) transport enables fast communications between entities r
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/shared_memory.png" alt="shared_memory.png;"/>
 
-We can implement the concept of shared memory using iceoryx and cyclone-dds.
+We can implement the concept of shared memory using iceoryx and cyclonedds.
 
-
-iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload.   
-1. A memory pool is created out of publisher and subscriber.   
+iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload. Following are the steps followed:    
+1. A memory pool is created.   
 2. Publisher sends a request to pool manager for a shared memory region. 
-3. Then pool manager gives a handle. 
-4. Publisher will put data into the given loaction and will give handle to subscriber. 
+3. Pool manager gives a handle. 
+4. Publisher will put data into the given location and will give handle to subscriber. 
 5. Subscriber then uses the handle to access the data. 
 6. Finally, subscriber frees the handle which then goes back to the pool.
 
 [SMT.webm](https://user-images.githubusercontent.com/102716966/194551842-291a3217-cebd-4cce-a4fd-6b398f525c5e.webm)
 
+You can have multiple subscribers. Each subscriber gets a handle and can use the memory. After the usage it frees the handle. When all the handles are freed, buffer goes back to pool and can be reused.
+
+Important thing to note here is that memory is allocated by a pool manager and not the publisher. When a publisher wants to publish data, it has to first `loan` a memory region, put data into memory and then publish that memory.
+
+CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using https://github.com/eclipse-iceoryx/iceoryx) concept instead of serializing to a network.
+
+## <b> How to publish a topic? </b>
+
+1. Create a node and enable `shared_memory` as shown below:
+
+```rust
+let mut node = NodeBuilder::default().with_shared_memory(true);
+```
+
+2.  Define the `PublishOptions` as per your requirements. Please find an example below:
+   
+```rust
+ let mut shm_publish_options = PublishOptions::default();
+    let shm_publish_options = shm_publish_options
+        .with_durability(sabaton_mw::qos::QosDurability::Volatile)
+        .with_reliability(sabaton_mw::qos::QosReliability::Reliable(
+            Duration::from_millis(1000),
+        ))
+        .with_history(sabaton_mw::qos::QosHistory::KeepLast(1));
+
+```
+
+3.  Advertise your topic using `advertise()`, which then returns a writer. For instance, here `Image1080p4BPP` is the topic which is being advertised:    
 
 
+```rust
+ let mut writer = node
+        .advertise::<Image1080p4BPP>(&shm_publish_options)
+        .unwrap();
+```  
+
+4. Loan a memory using the writer which we got in step#3 as shown below:  
+   
+```rust
+ writer.loan();
+```
+
+5.  Push your data into the memory.
+6.  Initialise the loaned memory as shown below:   
+
+ ```rust
+let finalized_image = loaned_image.assume_init();
+```
+
+7. Return the loaned buffer as shown below. With that your topic would be published!
+
+ ```rust
+writer.return_loan(finalized_image).unwrap();
+```
+
+8. Before running the publisher, please run `iox-roudi` which is an iceoryx application by giving the path of config file as a parameter:
+ ```rust
+ ./iox-roudi -c <CONFIG FILE PATH>
+```
+You can check for iox-roudi configuration in the following link:  
+ https://github.com/sabaton-rs/v4l2-capture-node/blob/main/roudi_config.toml
+
+ <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/roudi.png" alt="roudi.png;"/>
+
+Please refer to the following link for more details:  
+https://github.com/sabaton-rs/v4l2-capture-node/blob/928cd844efdb8672288a9ab86e14bb68232c60f1/src/lib.rs
+
+
+## <b> How to subscribe to a topic? </b>
+
+1. Create a node and enable `shared_memory` as shown below:
+
+```rust
+let mut node = NodeBuilder::default().with_shared_memory(true);
+```
+
+2.  Define the `SubscribeOptions` as per your requirements. Please find an example below:
+   
+```rust
+ let mut shm_subscribe_options = SubscribeOptions::default();
+```
+3. Subscribe to the topic as shown below:
+   
+```rust
+let mut reader= node.subscribe_async::<Image1080p4BPP>(&shm_subscribe_options).expect("Unable to advertise");
+```
+4. Access the data as explained in [previous-section](#b-122-how-to-subscribe-to-a-topicb)
+
+An example of a communication between a publisher(Left side image) and a subscriber(Right side image) is shown below:
+
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SMT_pub_sub.png" alt="SMT_pub_sub.png;"/>
