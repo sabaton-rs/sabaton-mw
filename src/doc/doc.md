@@ -21,9 +21,9 @@ This document explains in detail about the different concepts of Sabaton middlew
   - [Contributions]
 
 
-
-## 1.Sabaton node and Publish-Subscribe Architecture 
 <a name="sabatonnode"></a>
+## 1.Sabaton node and Publish-Subscribe Architecture 
+
 
 
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
@@ -40,8 +40,9 @@ Sabaton nodes are applications that interact with the rest of the system using d
 
 Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
-#### <b>1.1 How to create a sabaton node?</b>
 <a name="sabatonnode-creation"></a>
+#### <b>1.1 How to create a sabaton node?</b>
+
 
 ##### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
