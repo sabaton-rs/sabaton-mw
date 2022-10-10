@@ -24,8 +24,7 @@ This document explains in detail about the different concepts of Sabaton middlew
   - [<div style="color:red"> 4. Creating your own interface library crate </div>](#div-stylecolorred-4-creating-your-own-interface-library-crate-div)
   - [<div style="color:red"> 5. Shared memory transport </div>](#div-stylecolorred-5-shared-memory-transport-div)
     - [<b> 5.1 How to publish a topic? </b>](#b-51-how-to-publish-a-topic-b)
-    - [<b> 5.2 How to subscribe to a topic? </b>](#b-52-how-to-subscribe-to-a-topic-b)1.2.1. [How to publish a topic?](#pub)  
-        1.2.2. [How to subscribe to a topic?](#sub)
+    - [<b> 5.2 How to subscribe to a topic? </b>](#b-52-how-to-subscribe-to-a-topic-b)
   
 
 ## <div style="color:red">1.Sabaton node and Publish-Subscribe Architecture </div>
