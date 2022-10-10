@@ -30,7 +30,8 @@ This document explains in detail about the different concepts of Sabaton middlew
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
 
 ### <div style="color:blue">1. Sabaton Node </div>
-[Sabaton-Node]: #Sabaton-Node
+[Sabaton-Node]: 
+#Sabaton-Node
 
 Sabaton nodes are applications that interact with the rest of the system using data topics and/or interfaces. Nodes may,
 
