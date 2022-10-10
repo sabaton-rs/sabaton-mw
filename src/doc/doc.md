@@ -9,7 +9,7 @@ This document explains in detail about the different concepts of Sabaton middlew
 
  
   1. [Sabaton node and Publish-Subscribe Architecture](#sabatonnode)  
-  1.1. [How to create a sabaton node?]  
+  1.1. [How to create a sabaton node?](#sabatonnode-creation) 
   - [What the process is]
   - [The RFC life-cycle]
   - [Reviewing RFCs]
@@ -41,8 +41,7 @@ Sabaton nodes are applications that interact with the rest of the system using d
 Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
 #### <b>1.1 How to create a sabaton node?</b>
-[How to create a sabaton node?]: 
-#how-to-create-a-sabaton-node?
+<a name="sabatonnode-creation"></a>
 
 ##### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
