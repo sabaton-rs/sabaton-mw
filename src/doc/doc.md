@@ -8,9 +8,11 @@ This document explains in detail about the different concepts of Sabaton middlew
 [Table of Contents]: #table-of-contents
 
  
-  1. [Sabaton node and Publish-Subscribe Architecture](#sabatonnode)  
-  1.1. [How to create a sabaton node?](#sabatonnode-creation)   
-  1.2 [Pub/Sub Messaging](#Pub-Sub)  
+  1. [Sabaton node and Publish-Subscribe Architecture](##sabatonnode)  
+  1.1. [How to create a sabaton node?](###sabatonnode-creation)   
+  1.2 [Pub/Sub Messaging](###Pub-Sub)  
+    1.2.1 [How to publish a topic?](####pub)  
+    1.2.2 [How to subscribe to a topic?](####sub)
   - [The RFC life-cycle]
   - [Reviewing RFCs]
   - [Implementing an RFC]
@@ -28,9 +30,6 @@ This document explains in detail about the different concepts of Sabaton middlew
 
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
 
-### <b>Sabaton Node</b>
-
-
 Sabaton nodes are applications that interact with the rest of the system using data topics and/or interfaces. Nodes may,
 
 1. Publish data
@@ -41,10 +40,10 @@ Sabaton nodes are applications that interact with the rest of the system using d
 Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
 <a name="sabatonnode-creation"></a>
-#### <b>1.1 How to create a sabaton node?</b>
+### <b>1.1 How to create a sabaton node?</b>
 
 
-##### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
+#### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
 
@@ -90,7 +89,7 @@ You ca explore more on the different methods available for `NodeBuilder` in the 
 If you are looking for an example implementation for creating a node, please refer to the following link:
 <https://github.com/sabaton-rs/sabaton-mw/blob/6ee05cf9a54e6267f3b3e9ee1f95ff4d5500c4d3/src/tests.rs#L34>
 
-##### <b> 1.1.2 Using cargo-generate </b>
+#### <b> 1.1.2 Using cargo-generate </b>
 
 Please follow the below mentioned steps to create template for a Sabaton node using cargo-generate:
 
@@ -103,7 +102,7 @@ cargo generate --git <https://github.com/sabaton-rs/node-template.git>
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation;"/>
 
 <a name="Pub-Sub"></a>
-#### <b> 1.2 Pub/Sub Messaging</b>
+### <b> 1.2 Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
 
@@ -118,6 +117,7 @@ You can also have a look into the different possible topics which can be publish
 
 In a nutshell, to broadcast a message, publisher node simply pushes a message to the topic.All nodes that had subscribed to the topic will receive every message that is broadcast.
 
+<a name="pub"></a>
 #### <b> 1.2.1 How to publish a topic?</b>
 
 Follow the below mentioned steps to publish a topic:
@@ -139,6 +139,7 @@ let mut res = SpeedWriter.publish(speed.clone());
 Please refer to the following link to see an example implementation for publishing a topic:
 <https://github.com/sabaton-rs/demo_pub/blob/65f88358544f1082116c6835e936010ebcf4d960/src/lib.rs>
 
+<a name="sub"></a>
 #### <b> 1.2.2 How to subscribe to a topic?</b>  
 
 Follow the below mentioned steps to subscribe a topic:  
