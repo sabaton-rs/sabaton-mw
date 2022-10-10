@@ -9,8 +9,8 @@ This document explains in detail about the different concepts of Sabaton middlew
 
  
   1. [Sabaton node and Publish-Subscribe Architecture](#sabatonnode)  
-  1.1. [How to create a sabaton node?](#sabatonnode-creation) 
-  - [What the process is]
+  1.1. [How to create a sabaton node?](#sabatonnode-creation)   
+  1.2 [Pub/Sub Messaging](#Pub-Sub)
   - [The RFC life-cycle]
   - [Reviewing RFCs]
   - [Implementing an RFC]
@@ -102,6 +102,7 @@ cargo install cargo-generate
 cargo generate --git <https://github.com/sabaton-rs/node-template.git>  
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation;"/>
 
+<a name="Pub-Sub"></a>
 #### <b> 1.2 Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
