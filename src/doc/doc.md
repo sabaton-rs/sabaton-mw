@@ -8,23 +8,23 @@ This document explains in detail about the different concepts of Sabaton middlew
 [Table of Contents]: #table-of-contents
 
   - [1.Sabaton node and Publish-Subscribe Architecture](#sabatonnode) 
-    - [1.1 How to create a sabaton node?](#b11-how-to-create-a-sabaton-nodeb)
-      - [1.1.1 Using Default trait implementation for NodeBuilder](#b111-using-default-trait-implementation-for-nodebuilderb)
-      - [1.1.2 Using cargo-generate](#b-112-using-cargo-generate-b)
-    - [1.2 Pub/Sub Messaging](#b-12-pubsub-messagingb)
-      - [1.2.1 How to publish a topic?](#b-121-how-to-publish-a-topicb)
-      - [1.2.2 How to subscribe to a topic?](#b-122-how-to-subscribe-to-a-topicb)
-  - [2. Creating your own topic library crate](#div-stylecolorred2-creating-your-own-topic-library-crate-div)
-  - [3. How to use a service in an application](#div-stylecolorred-3-how-to-use-a-service-in-an-application-div)
-    - [3.1 SOME/IP>](#div-stylecolorblue-31-someip-div)
-    - [3.2 Service](#b-32-service-b)
-    - [3.2.1 How to add service in a Server application?](#321-b-how-to-add-service-in-a-server-applicationb)
-      - [3.2.2 How to utilise a service in a Client application?](#b-322-how-to-utilise-a-service-in-a-client-application-b)
+    - [1.1 How to create a sabaton node?](#sabatonnode-creation)
+      - [1.1.1 Using Default trait implementation for NodeBuilder](#sabatonnode-builder)
+      - [1.1.2 Using cargo-generate](#sabatonnode-generate)
+    - [1.2 Pub/Sub Messaging](#pub-sub)
+      - [1.2.1 How to publish a topic?](#pub)
+      - [1.2.2 How to subscribe to a topic?](#sub)
+  - [2. Creating your own topic library crate](#topic-lib)
+  - [3. How to use a service in an application?](#service-app)
+    - [3.1 SOME/IP>](#someip)
+    - [3.2 Service](#service)
+      - [3.2.1 How to add service in a Server application?](#server)
+      - [3.2.2 How to utilise a service in a Client application?](#client)
   
-  - [4. Creating your own interface library crate](#div-stylecolorred-4-creating-your-own-interface-library-crate-div)
-  - [5. Shared memory transport ](#div-stylecolorred-5-shared-memory-transport-div)
-    - [5.1 How to publish a topic? ](#b-51-how-to-publish-a-topic-b)
-    - [5.2 How to subscribe to a topic? ](#b-52-how-to-subscribe-to-a-topic-b)
+  - [4. Creating your own interface library crate](#lib-crate)
+  - [5. Shared memory transport ](#smt)
+    - [5.1 How to publish a topic? ](#smt-pub)
+    - [5.2 How to subscribe to a topic? ](#smt-sub)
   
 <a name="sabatonnode"></a>
 ## <div style="color:red">1.Sabaton node and Publish-Subscribe Architecture </div>
@@ -43,7 +43,7 @@ Nodes will use the functionality of Sabaton Middleware to achieve the above.
 <a name="sabatonnode-creation"></a>
 ### <b>1.1 How to create a sabaton node?</b>
 
-
+<a name="sabatonnode-builder"></a>
 #### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
@@ -90,6 +90,7 @@ You ca explore more on the different methods available for `NodeBuilder` in the 
 If you are looking for an example implementation for creating a node, please refer to the following link:
 <https://github.com/sabaton-rs/sabaton-mw/blob/6ee05cf9a54e6267f3b3e9ee1f95ff4d5500c4d3/src/tests.rs#L34>
 
+<a name="sabatonnode-generate"></a>
 #### <b> 1.1.2 Using cargo-generate </b>
 
 Please follow the below mentioned steps to create template for a Sabaton node using cargo-generate:
@@ -102,7 +103,7 @@ cargo install cargo-generate
 cargo generate --git <https://github.com/sabaton-rs/node-template.git>  
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation;"/>
 
-
+<a name="pub-sub"></a>
 ### <b> 1.2 Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
@@ -118,6 +119,7 @@ You can also have a look into the different possible topics which can be publish
 
 In a nutshell, to broadcast a message, publisher node simply pushes a message to the topic.All nodes that had subscribed to the topic will receive every message that is broadcast.
 
+<a name="pub"></a>
 #### <b> 1.2.1 How to publish a topic?</b>
 
 Follow the below mentioned steps to publish a topic:
@@ -139,7 +141,7 @@ let mut res = SpeedWriter.publish(speed.clone());
 Please refer to the following link to see an example implementation for publishing a topic:
 <https://github.com/sabaton-rs/demo_pub/blob/65f88358544f1082116c6835e936010ebcf4d960/src/lib.rs>
 
-
+<a name="sub"></a>
 #### <b> 1.2.2 How to subscribe to a topic?</b>  
 
 Follow the below mentioned steps to subscribe a topic:  
@@ -174,7 +176,7 @@ An example of a communication between a publisher(Left side image) and a subscri
 
 As you can see from the above figure, publisher is publishing the topic called `Speed` and subscriber is receiving the same.
 
-
+<a name="topic-lib"></a>
 ## <div style="color:red">2. Creating your own topic library crate </div>
 
 1. Add `cdds_derive` crate into your Cargo.toml file.
@@ -219,10 +221,12 @@ let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
 For better understanding refer to the follwing code :
 https://github.com/sabaton-rs/sabaton-mw/blob/main/src/tests.rs
 
-## <div style="color:red"> 3. How to use a service in an application </div>
+<a name="service-app"></a>
+## <div style="color:red"> 3. How to use a service in an application? </div>
 
 Before moving on to the steps to add service to an application, lets brush through the concept(SOME/IP) using which we do the same
 
+<a name="someip"></a>
 ### <div style="color:blue"> 3.1 SOME/IP </div>
 
 SOME/IP is a middleware solution that enables service-oriented communication between the control units.
@@ -231,6 +235,7 @@ SOME/IP is a middleware solution that enables service-oriented communication bet
 
 The Server ECU provides a service instance which implements a service interface. The client ECU can use this service instance using SOME/IP to request the required data from the server.
 
+<a name="service"></a>
 ### <b> 3.2 Service </b>
 
 Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
@@ -291,7 +296,8 @@ In the above example only 1 feild (ExampleStatus) is used. If you want to use mo
 But for the time being, let us stick on to the inerface defined in `interface-example`.
 We will now try to add the service defined in `interface-example` to an application.
 
-### 3.2.1 <b> How to add service in a Server application?</b>
+<a name="server"></a>
+#### 3.2.1 <b> How to add service in a Server application?</b>
 
 1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
 
@@ -334,6 +340,7 @@ impl ServiceVersion for EchoServerImpl {}
 
 As you can see from the above code, `echo()`function of the trait   `Example` is implemented for the structure `EchoServerImpl`. Now your application will act as a server.  A client application can use a service instance to get the required data (fields, events, and methods) from the server. API called `get_status()` can be used by the client for querying `ExampleStatus` and `set_status()` can be used by the client to change/modify `ExampleStatus`.
 
+<a name="client"></a>
 #### <b> 3.2.2 How to utilise a service in a Client application? </b>
 
 Let us again use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our client application.  
@@ -381,6 +388,7 @@ An example of a communication between a server(Left side image) and a client(Rig
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/server_client.png"   alt="server_client;"/>  
 
+<a name="lib-crate"></a>
 ## <div style="color:red"> 4. Creating your own interface library crate </div>
 
 Until now we were using the default interface implementation called `interface-example`. But how to define an interface by your own and use the same in your applications. Please follow the steps below to create your own interface:
@@ -421,6 +429,7 @@ impl Default for UpdateStatus {
 3. Build the interface code.
 4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use.
 
+<a name="smt"></a>
 ## <div style="color:red"> 5. Shared memory transport </div>
 
 The shared memory (SHM) transport enables fast communications between entities running in the same processing unit/machine, relying on the shared memory mechanisms provided by the host operating system.
@@ -445,6 +454,7 @@ Important thing to note here is that memory is allocated by a pool manager and n
 
 CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using https://github.com/eclipse-iceoryx/iceoryx) concept instead of serializing to a network.
 
+<a name="smt-pub"></a>
 ### <b> 5.1 How to publish a topic? </b>
 
 1. Create a node and enable `shared_memory` as shown below:
@@ -506,7 +516,7 @@ You can check for iox-roudi configuration in the following link:
 Please refer to the following link for more details:  
 https://github.com/sabaton-rs/v4l2-capture-node/blob/928cd844efdb8672288a9ab86e14bb68232c60f1/src/lib.rs
 
-
+<a name="smt-sub"></a>
 ### <b> 5.2 How to subscribe to a topic? </b>
 
 1. Create a node and enable `shared_memory` as shown below:
