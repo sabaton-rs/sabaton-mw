@@ -1,32 +1,31 @@
 # <div style="color:red"> Getting started with Sabaton  middleware</div>
 
-[Sabaton mw]: #sabaton-mw
 
 This document explains in detail about the different concepts of Sabaton middleware
 
 ## Table of Contents
-[Table of Contents]: #table-of-contents
 
-  - [1.Sabaton node and Publish-Subscribe Architecture](#sabatonnode) 
-    - [1.1 How to create a sabaton node?](#sabatonnode-creation)
-      - [1.1.1 Using Default trait implementation for NodeBuilder](#sabatonnode-builder)
-      - [1.1.2 Using cargo-generate](#sabatonnode-generate)
-    - [1.2 Pub/Sub Messaging](#pub-sub)
-      - [1.2.1 How to publish a topic?](#pub)
-      - [1.2.2 How to subscribe to a topic?](#sub)
-  - [2. Creating your own topic library crate](#topic-lib)
-  - [3. How to use a service in an application?](#service-app)
-    - [3.1 SOME/IP>](#someip)
-    - [3.2 Service](#service)
-      - [3.2.1 How to add service in a Server application?](#server)
-      - [3.2.2 How to utilise a service in a Client application?](#client)
+- [1.Sabaton node and Publish-Subscribe Architecture](#sabatonnode)
+  - [1.1 How to create a sabaton node?](#sabatonnode-creation)
+    - [1.1.1 Using Default trait implementation for NodeBuilder](#sabatonnode-builder)
+    - [1.1.2 Using cargo-generate](#sabatonnode-generate)
+  - [1.2 Pub/Sub Messaging](#pub-sub)
+    - [1.2.1 How to publish a topic?](#pub)
+    - [1.2.2 How to subscribe to a topic?](#sub)
+- [2. Creating your own topic library crate](#topic-lib)
+- [3. How to use a service in an application?](#service-app)
+  - [3.1 SOME/IP>](#someip)
+  - [3.2 Service](#service)
+    - [3.2.1 How to add service in a Server application?](#server)
+    - [3.2.2 How to utilise a service in a Client application?](#client)
   
-  - [4. Creating your own interface library crate](#lib-crate)
-  - [5. Shared memory transport ](#smt)
-    - [5.1 How to publish a topic? ](#smt-pub)
-    - [5.2 How to subscribe to a topic? ](#smt-sub)
+- [4. Creating your own interface library crate](#lib-crate)
+- [5. Shared memory transport](#smt)
+  - [5.1 How to publish a topic?](#smt-pub)
+  - [5.2 How to subscribe to a topic?](#smt-sub)
   
 <a name="sabatonnode"></a>
+
 ## <div style="color:red">1.Sabaton node and Publish-Subscribe Architecture </div>
 
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
@@ -41,13 +40,14 @@ Sabaton nodes are applications that interact with the rest of the system using d
 Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
 <a name="sabatonnode-creation"></a>
+
 ### <b>1.1 How to create a sabaton node?</b>
 
 <a name="sabatonnode-builder"></a>
+
 #### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
-
 
 We can create a node using the "Default" trait implementation for structure NodeBuilder.
 For example:
@@ -59,7 +59,7 @@ NodeBuilder::default()
 .expect("Node creation error") 
 ```
 
-The above example, creates a node called "example-node" with default values for the members of structure "NodeBuilder". 
+The above example, creates a node called "example-node" with default values for the members of structure "NodeBuilder".
 
 If you want to change the default values, different methods are available within the context of the structure `NodeBuilder`. For example, if you want to make "single_threaded" as false(default is true), then use the method called `multi_threaded()` as shown below:
 
@@ -91,6 +91,7 @@ If you are looking for an example implementation for creating a node, please ref
 <https://github.com/sabaton-rs/sabaton-mw/blob/6ee05cf9a54e6267f3b3e9ee1f95ff4d5500c4d3/src/tests.rs#L34>
 
 <a name="sabatonnode-generate"></a>
+
 #### <b> 1.1.2 Using cargo-generate </b>
 
 Please follow the below mentioned steps to create template for a Sabaton node using cargo-generate:
@@ -98,25 +99,21 @@ Please follow the below mentioned steps to create template for a Sabaton node us
 1. Install cargo-generate :  
 cargo install cargo-generate  
 
-
 1. Use cargo generate to create a node:  
 cargo generate --git <https://github.com/sabaton-rs/node-template.git>  
-
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation;"/>
 
 <a name="pub-sub"></a>
+
 ### <b> 1.2 Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
 
-
-
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism;" caption="Image from :https://aws.amazon.com/pub-sub-messaging/"/>
-
+<div>
 <center> <b>Publisher subscriber mechanism</b>(Image from :https://aws.amazon.com/pub-sub-messaging/)</center>
-
-
+</div>
 
 Vehicle-signal crate generates the DDS Topic types for use in an automotive platform.
 Please have a look into the crate before proceeding:
@@ -128,6 +125,7 @@ You can also have a look into the different possible topics which can be publish
 In a nutshell, to broadcast a message, publisher node simply pushes a message to the topic.All nodes that had subscribed to the topic will receive every message that is broadcast.
 
 <a name="pub"></a>
+
 #### <b> 1.2.1 How to publish a topic?</b>
 
 Follow the below mentioned steps to publish a topic:
@@ -150,6 +148,7 @@ Please refer to the following link to see an example implementation for publishi
 <https://github.com/sabaton-rs/demo_pub/blob/65f88358544f1082116c6835e936010ebcf4d960/src/lib.rs>
 
 <a name="sub"></a>
+
 #### <b> 1.2.2 How to subscribe to a topic?</b>  
 
 Follow the below mentioned steps to subscribe a topic:  
@@ -161,7 +160,7 @@ let mut subscribe_options = SubscribeOptions::default();
 let mut speed_reader= node.subscribe_async::<v3::vehicle::Speed>(&subscribe_options).expect("Unable to advertise");
 ```
 
-2. Create an array for storing samples of the topic which you want to subscribe to as shown below: 
+2. Create an array for storing samples of the topic which you want to subscribe to as shown below:
 
 ```rust
 let mut speed = Samples::<Speed>::new(1);
@@ -176,15 +175,16 @@ if let Some(speed) = speed.iter().next() { println!("Speed {:?}",speed.value.0)}
 }
 ```
 
-Please refer to the following link to see an example implementation for subscribing a topic: https://github.com/sabaton-rs/demo_sub/blob/ce227b52ce8a3530cdd4f5481a7769d1ddcfec07/src/lib.rs
+Please refer to the following link to see an example implementation for subscribing a topic: <https://github.com/sabaton-rs/demo_sub/blob/ce227b52ce8a3530cdd4f5481a7769d1ddcfec07/src/lib.rs>
 
 An example of a communication between a publisher(Left side image) and a subscriber(Right side image) is shown below:  
 
-<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Pub_sub_example.png"   alt="server_client;"/>    
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Pub_sub_example.png"   alt="server_client;"/>
 
 As you can see from the above figure, publisher is publishing the topic called `Speed` and subscriber is receiving the same.
 
 <a name="topic-lib"></a>
+
 ## <div style="color:red">2. Creating your own topic library crate </div>
 
 1. Add `cdds_derive` crate into your Cargo.toml file.
@@ -226,15 +226,18 @@ let node = NodeBuilder::default()
 let publish_options = PublishOptions::default();
 let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
 ```
+
 For better understanding refer to the follwing code :
-https://github.com/sabaton-rs/sabaton-mw/blob/main/src/tests.rs
+<https://github.com/sabaton-rs/sabaton-mw/blob/main/src/tests.rs>
 
 <a name="service-app"></a>
+
 ## <div style="color:red"> 3. How to use a service in an application? </div>
 
 Before moving on to the steps to add service to an application, lets brush through the concept(SOME/IP) using which we do the same
 
 <a name="someip"></a>
+
 ### <div style="color:blue"> 3.1 SOME/IP </div>
 
 SOME/IP is a middleware solution that enables service-oriented communication between the control units.
@@ -244,6 +247,7 @@ SOME/IP is a middleware solution that enables service-oriented communication bet
 The Server ECU provides a service instance which implements a service interface. The client ECU can use this service instance using SOME/IP to request the required data from the server.
 
 <a name="service"></a>
+
 ### <b> 3.2 Service </b>
 
 Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
@@ -305,6 +309,7 @@ But for the time being, let us stick on to the inerface defined in `interface-ex
 We will now try to add the service defined in `interface-example` to an application.
 
 <a name="server"></a>
+
 #### 3.2.1 <b> How to add service in a Server application?</b>
 
 1. Add some-ip ,someip_derive and interface-example crates into your Cargo.toml file:  
@@ -349,6 +354,7 @@ impl ServiceVersion for EchoServerImpl {}
 As you can see from the above code, `echo()`function of the trait   `Example` is implemented for the structure `EchoServerImpl`. Now your application will act as a server.  A client application can use a service instance to get the required data (fields, events, and methods) from the server. API called `get_status()` can be used by the client for querying `ExampleStatus` and `set_status()` can be used by the client to change/modify `ExampleStatus`.
 
 <a name="client"></a>
+
 #### <b> 3.2.2 How to utilise a service in a Client application? </b>
 
 Let us again use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our client application.  
@@ -397,6 +403,7 @@ An example of a communication between a server(Left side image) and a client(Rig
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/server_client.png"   alt="server_client;"/>  
 
 <a name="lib-crate"></a>
+
 ## <div style="color:red"> 4. Creating your own interface library crate </div>
 
 Until now we were using the default interface implementation called `interface-example`. But how to define an interface by your own and use the same in your applications. Please follow the steps below to create your own interface:
@@ -438,6 +445,7 @@ impl Default for UpdateStatus {
 4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use.
 
 <a name="smt"></a>
+
 ## <div style="color:red"> 5. Shared memory transport </div>
 
 The shared memory (SHM) transport enables fast communications between entities running in the same processing unit/machine, relying on the shared memory mechanisms provided by the host operating system.
@@ -446,12 +454,13 @@ The shared memory (SHM) transport enables fast communications between entities r
 
 We can implement the concept of shared memory using iceoryx and cyclonedds.
 
-iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload. Following are the steps followed:    
-1. A memory pool is created.   
-2. Publisher sends a request to pool manager for a shared memory region. 
-3. Pool manager gives a handle. 
-4. Publisher will put data into the given location and will give handle to subscriber. 
-5. Subscriber then uses the handle to access the data. 
+iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload. Following are the steps followed:
+
+1. A memory pool is created.
+2. Publisher sends a request to pool manager for a shared memory region.
+3. Pool manager gives a handle.
+4. Publisher will put data into the given location and will give handle to subscriber.
+5. Subscriber then uses the handle to access the data.
 6. Finally, subscriber frees the handle which then goes back to the pool.
 
 [SMT.webm](https://user-images.githubusercontent.com/102716966/194551842-291a3217-cebd-4cce-a4fd-6b398f525c5e.webm)
@@ -460,9 +469,10 @@ You can have multiple subscribers. Each subscriber gets a handle and can use the
 
 Important thing to note here is that memory is allocated by a pool manager and not the publisher. When a publisher wants to publish data, it has to first `loan` a memory region, put data into memory and then publish that memory.
 
-CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using https://github.com/eclipse-iceoryx/iceoryx) concept instead of serializing to a network.
+CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using <https://github.com/eclipse-iceoryx/iceoryx>) concept instead of serializing to a network.
 
 <a name="smt-pub"></a>
+
 ### <b> 5.1 How to publish a topic? </b>
 
 1. Create a node and enable `shared_memory` as shown below:
@@ -471,8 +481,8 @@ CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on
 let mut node = NodeBuilder::default().with_shared_memory(true);
 ```
 
-2.  Define the `PublishOptions` as per your requirements. Please find an example below:
-   
+2. Define the `PublishOptions` as per your requirements. Please find an example below:
+
 ```rust
  let mut shm_publish_options = PublishOptions::default();
 let shm_publish_options = shm_publish_options
@@ -484,8 +494,7 @@ let shm_publish_options = shm_publish_options
 
 ```
 
-3.  Advertise your topic using `advertise()`, which then returns a writer. For instance, here `Image1080p4BPP` is the topic which is being advertised:    
-
+3. Advertise your topic using `advertise()`, which then returns a writer. For instance, here `Image1080p4BPP` is the topic which is being advertised:
 
 ```rust
  let mut writer = node
@@ -494,13 +503,13 @@ let shm_publish_options = shm_publish_options
 ```  
 
 4. Loan a memory using the writer which we got in step#3 as shown below:  
-   
+
 ```rust
  writer.loan();
 ```
 
-5.  Push your data into the memory.
-6.  Initialise the loaned memory as shown below:   
+5. Push your data into the memory.
+6. Initialise the loaned memory as shown below:
 
  ```rust
 let finalized_image = loaned_image.assume_init();
@@ -513,18 +522,21 @@ writer.return_loan(finalized_image).unwrap();
 ```
 
 8. Before running the publisher, please run `iox-roudi` which is an iceoryx application by giving the path of config file as a parameter:
+
  ```rust
  ./iox-roudi -c <CONFIG FILE PATH>
 ```
+
 You can check for iox-roudi configuration in the following link:  
- https://github.com/sabaton-rs/v4l2-capture-node/blob/main/roudi_config.toml
+ <https://github.com/sabaton-rs/v4l2-capture-node/blob/main/roudi_config.toml>
 
  <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/roudi.png" alt="roudi.png;"/>
 
 Please refer to the following link for more details:  
-https://github.com/sabaton-rs/v4l2-capture-node/blob/928cd844efdb8672288a9ab86e14bb68232c60f1/src/lib.rs
+<https://github.com/sabaton-rs/v4l2-capture-node/blob/928cd844efdb8672288a9ab86e14bb68232c60f1/src/lib.rs>
 
 <a name="smt-sub"></a>
+
 ### <b> 5.2 How to subscribe to a topic? </b>
 
 1. Create a node and enable `shared_memory` as shown below:
@@ -533,16 +545,18 @@ https://github.com/sabaton-rs/v4l2-capture-node/blob/928cd844efdb8672288a9ab86e1
 let mut node = NodeBuilder::default().with_shared_memory(true);
 ```
 
-2.  Define the `SubscribeOptions` as per your requirements. Please find an example below:
-   
+2. Define the `SubscribeOptions` as per your requirements. Please find an example below:
+
 ```rust
  let mut shm_subscribe_options = SubscribeOptions::default();
 ```
+
 3. Subscribe to the topic as shown below:
-   
+
 ```rust
 let mut reader= node.subscribe_async::<Image1080p4BPP>(&shm_subscribe_options).expect("Unable to advertise");
 ```
+
 4. Access the data as explained in [previous-section](#b-122-how-to-subscribe-to-a-topicb)
 
 An example of a communication between a publisher(Left side image) and a subscriber(Right side image) is shown below:
