@@ -112,8 +112,8 @@ Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous ser
 
 <figure>
 <img  src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism;" caption="Image from :https://aws.amazon.com/pub-sub-messaging/" />
-<div align="center">
-<figcaption>(Image from :https://aws.amazon.com/pub-sub-messaging/)</figcaption>
+<div>
+<figcaption><t>(Image from :https://aws.amazon.com/pub-sub-messaging/)</t></figcaption>
 </div>
 </figure>
 
