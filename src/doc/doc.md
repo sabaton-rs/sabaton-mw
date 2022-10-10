@@ -246,6 +246,7 @@ Before moving on to the steps to add service to an application, lets brush throu
 SOME/IP is a middleware solution that enables service-oriented communication between the control units.
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SOMEIP.png" alt="SOME/IP.png;"/>
+(Image from:https://www.embitel.com/blog/embedded-blog/how-some-ip-enables-service-oriented-architecture-in-ecu-network)
 
 The Server ECU provides a service instance which implements a service interface. The client ECU can use this service instance using SOME/IP to request the required data from the server.
 
@@ -455,6 +456,7 @@ The shared memory (SHM) transport enables fast communications between entities r
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/shared_memory.png" alt="shared_memory.png;"/>
 
+(Image from :https://discourse.ros.org/t/eprosima-fast-dds-from-shared-memory-to-zero-copy/18877)
 We can implement the concept of shared memory using iceoryx and cyclonedds.
 
 iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload. Following are the steps followed:
