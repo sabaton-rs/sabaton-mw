@@ -9,8 +9,8 @@ This document explains in detail about the different concepts of Sabaton middlew
 
   - [Opening](#sabaton-mw)
   - [Table of Contents]  
-  1. [Sabaton node and Publish-Subscribe Architecture]  
-    1.1. [How to create a sabaton node?]  
+  - 1. [Sabaton node and Publish-Subscribe Architecture]  
+    - 1.1. [How to create a sabaton node?]  
   - [What the process is]
   - [The RFC life-cycle]
   - [Reviewing RFCs]
