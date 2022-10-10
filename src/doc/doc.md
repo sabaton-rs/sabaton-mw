@@ -10,7 +10,7 @@ This document explains in detail about the different concepts of Sabaton middlew
  
   1. [Sabaton node and Publish-Subscribe Architecture](#sabatonnode)  
   1.1. [How to create a sabaton node?](#sabatonnode-creation)   
-  1.2 [Pub/Sub Messaging](#Pub-Sub)
+  1.2 [Pub/Sub Messaging](#Pub-Sub)  
   - [The RFC life-cycle]
   - [Reviewing RFCs]
   - [Implementing an RFC]
