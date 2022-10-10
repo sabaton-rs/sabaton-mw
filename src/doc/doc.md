@@ -111,9 +111,9 @@ cargo generate --git <https://github.com/sabaton-rs/node-template.git>
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
 
 <figure>
-<center>
-<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism;" caption="Image from :https://aws.amazon.com/pub-sub-messaging/"/>
 
+<img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism;" caption="Image from :https://aws.amazon.com/pub-sub-messaging/"/>
+<center>
 <figcaption>  <b>Publisher subscriber mechanism</b>(Image from :https://aws.amazon.com/pub-sub-messaging/)</figcaption>
 </center>
 </figure>
