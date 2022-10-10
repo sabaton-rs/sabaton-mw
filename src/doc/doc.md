@@ -115,7 +115,7 @@ Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous ser
 
 <figcaption> <t> Publisher subscriber mechanism(Image from :https://aws.amazon.com/pub-sub-messaging/)</t></figcaption>
 </figure>
-
+<div align="center">Publisher subscriber mechanism(Image from :https://aws.amazon.com/pub-sub-messaging/)</div>
 
 Vehicle-signal crate generates the DDS Topic types for use in an automotive platform.
 Please have a look into the crate before proceeding:
