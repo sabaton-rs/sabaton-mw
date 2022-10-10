@@ -31,7 +31,7 @@ This topic will help you to create a sabaton Node and publish a sample topic or 
 
 ### <div style="color:blue">1. Sabaton Node </div>
 [Sabaton Node]:   
-#sabaton-node
+##sabaton-node
 
 Sabaton nodes are applications that interact with the rest of the system using data topics and/or interfaces. Nodes may,
 
