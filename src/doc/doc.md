@@ -6,25 +6,29 @@ This document explains in detail about the different concepts of Sabaton middlew
 
 ## Table of Contents
 [Table of Contents]: #table-of-contents
-1. [Sabaton node and Publish-Subscribe Architecture](#sabatonnode)  
-  1.1. [How to create a sabaton node?](#sabatonnode-creation)   
-  1.2. [Pub/Sub Messaging](#pub-sub)  
-        1.2.1. [How to publish a topic?](#pub)  
+
+  - [1.Sabaton node and Publish-Subscribe Architecture](#1sabaton-node-and-publish-subscribe-architecture)
+    - [<b>1.1 How to create a sabaton node?</b>](#b11-how-to-create-a-sabaton-nodeb)
+      - [<b>1.1.1 Using Default trait implementation for NodeBuilder</b>](#b111-using-default-trait-implementation-for-nodebuilderb)
+      - [<b> 1.1.2 Using cargo-generate </b>](#b-112-using-cargo-generate-b)
+    - [<b> 1.2 Pub/Sub Messaging</b>](#b-12-pubsub-messagingb)
+      - [<b> 1.2.1 How to publish a topic?</b>](#b-121-how-to-publish-a-topicb)
+      - [<b> 1.2.2 How to subscribe to a topic?</b>](#b-122-how-to-subscribe-to-a-topicb)
+  - [<div style="color:red">2. Creating your own topic library crate </div>](#div-stylecolorred2-creating-your-own-topic-library-crate-div)
+  - [<div style="color:red"> 3. How to use a service in an application </div>](#div-stylecolorred-3-how-to-use-a-service-in-an-application-div)
+    - [<div style="color:blue"> 3.1 SOME/IP </div>](#div-stylecolorblue-31-someip-div)
+    - [<b> 3.2 Service </b>](#b-32-service-b)
+    - [3.2.1 <b> How to add service in a Server application?</b>](#321-b-how-to-add-service-in-a-server-applicationb)
+      - [<b> 3.2.2 How to utilise a service in a Client application? </b>](#b-322-how-to-utilise-a-service-in-a-client-application-b)
+      - [<b> Steps to be followed </b>](#b-steps-to-be-followed-b)
+  - [<div style="color:red"> 4. Creating your own interface library crate </div>](#div-stylecolorred-4-creating-your-own-interface-library-crate-div)
+  - [<div style="color:red"> 5. Shared memory transport </div>](#div-stylecolorred-5-shared-memory-transport-div)
+    - [<b> 5.1 How to publish a topic? </b>](#b-51-how-to-publish-a-topic-b)
+    - [<b> 5.2 How to subscribe to a topic? </b>](#b-52-how-to-subscribe-to-a-topic-b)1.2.1. [How to publish a topic?](#pub)  
         1.2.2. [How to subscribe to a topic?](#sub)
-  - [The RFC life-cycle]
-  - [Reviewing RFCs]
-  - [Implementing an RFC]
-  - [RFC Postponement]
-  - [Help this is all too informal!]
-  - [All this text looks very familiar!]
-  - [License]
-  - [Contributions]
+  
 
-
-<a name="sabatonnode"></a>
-## 1.Sabaton node and Publish-Subscribe Architecture 
-
-
+## <div style="color:red">1.Sabaton node and Publish-Subscribe Architecture </div>
 
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
 
@@ -99,7 +103,7 @@ cargo install cargo-generate
 cargo generate --git <https://github.com/sabaton-rs/node-template.git>  
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Node.png" alt="Node creation;"/>
 
-<a name="pub-sub"></a>
+
 ### <b> 1.2 Pub/Sub Messaging</b>
 
 Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous service-to-service communication used in serverless and microservices architectures. In a pub/sub model, any message published to a topic is immediately received by all of the subscribers to the topic.
@@ -115,7 +119,6 @@ You can also have a look into the different possible topics which can be publish
 
 In a nutshell, to broadcast a message, publisher node simply pushes a message to the topic.All nodes that had subscribed to the topic will receive every message that is broadcast.
 
-<a name="pub"></a>
 #### <b> 1.2.1 How to publish a topic?</b>
 
 Follow the below mentioned steps to publish a topic:
@@ -137,7 +140,7 @@ let mut res = SpeedWriter.publish(speed.clone());
 Please refer to the following link to see an example implementation for publishing a topic:
 <https://github.com/sabaton-rs/demo_pub/blob/65f88358544f1082116c6835e936010ebcf4d960/src/lib.rs>
 
-<a name="sub"></a>
+
 #### <b> 1.2.2 How to subscribe to a topic?</b>  
 
 Follow the below mentioned steps to subscribe a topic:  
