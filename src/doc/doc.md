@@ -9,8 +9,8 @@ This document explains in detail about the different concepts of Sabaton middlew
 
   - [Opening](#sabaton-mw)
   - [Table of Contents]  
-- [Sabaton node and Publish-Subscribe Architecture]  
-  - [1. Sabaton Node]  
+- [1.Sabaton node and Publish-Subscribe Architecture]  
+  - [1.1 How to create a sabaton node?]  
   - [What the process is]
   - [The RFC life-cycle]
   - [Reviewing RFCs]
@@ -23,15 +23,14 @@ This document explains in detail about the different concepts of Sabaton middlew
 
 
 
-## Sabaton node and Publish-Subscribe Architecture 
-[Sabaton node and Publish-Subscribe Architecture]: #Sabaton-node-and-Publish-Subscribe-Architecture
+## 1.Sabaton node and Publish-Subscribe Architecture 
+[1.Sabaton node and Publish-Subscribe Architecture]: #Sabaton-node-and-Publish-Subscribe-Architecture
 
 
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
 
-### 1. Sabaton Node
-[1. Sabaton Node]:   
-#1.-sabaton-node
+### <b>Sabaton Node</b>
+
 
 Sabaton nodes are applications that interact with the rest of the system using data topics and/or interfaces. Nodes may,
 
@@ -43,6 +42,8 @@ Sabaton nodes are applications that interact with the rest of the system using d
 Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
 #### <b>1.1 How to create a sabaton node?</b>
+[1.1 How to create a sabaton node?]: 
+#1.1-how-to-create-a-sabaton-node?
 
 ##### <b>1.1.1 Using Default trait implementation for NodeBuilder</b>
 
