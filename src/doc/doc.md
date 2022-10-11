@@ -50,7 +50,7 @@ Nodes will use the functionality of Sabaton Middleware to achieve the above.
 
  The `NodeBuilder` structure provides a builder pattern to create the node.
 
-We can create a node using the "Default" trait implementation for structure NodeBuilder.
+We can create a node using the "Default" trait implementation for structure `NodeBuilder`.
 For example:
 
 ```rust
@@ -85,7 +85,7 @@ NodeBuilder::default()
 .expect("Node creation error") 
 ```
 
-You ca explore more on the different methods available for `NodeBuilder` in the following link:
+You can explore more on the different methods available for `NodeBuilder` in the following link:
 <https://github.com/sabaton-rs/sabaton-mw/blob/61b677ec262b53f52a3e1557775c61228535e2a5/src/lib.rs#L234>
 
 If you are looking for an example implementation for creating a node, please refer to the following link:
@@ -117,7 +117,7 @@ Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous ser
 
 The OMG Data Distribution Service (DDS™) is a middleware protocol and API standard for data-centric connectivity from the Object Management Group® (OMG®).
 Vehicle-signal crate generates the DDS Topic types for use in an automotive platform.
-Please have a look into the crate before proceeding:
+Please have a look into this crate before proceeding:
 <https://doc.sabaton.dev/public/doc/vehicle_signals/index.html>
 
 You can also have a look into the different possible topics which can be published:
@@ -135,13 +135,14 @@ Follow the below mentioned steps to publish a topic:
 For example, if you want to publish the topic "Speed", then you can use `advertise()` in the following manner:
 
 ```rust
-let mut SpeedWriter= <name of node>.advertise::<v2::vehicle::Speed>().expect("Unable to advertise");  
+let publish_options = PublishOptions::default();
+let mut SpeedWriter= node.advertise::<v3::vehicle::Speed>(&publish_options).expect("Unable to advertise"); 
 ```  
 
 2. Use `publish()` on writer returned by `advertise()` to push a message to a given topic as shown below:  
 
 ```rust
-let speed = Arc::new(Speed::new(KilometrePerHour(10.0), None).unwrap());  //Message to be pushed
+let speed = Arc::new(Speed::new(KilometrePerHour(10.0), None).unwrap());
 let mut res = SpeedWriter.publish(speed.clone());
 ```
 
@@ -154,7 +155,7 @@ Please refer to the following link to see an example implementation for publishi
 
 Follow the below mentioned steps to subscribe a topic:  
 
-1. You can use  `subscribe()` or `subscribe_async()` within the context of a node to subscribe to a topic. For instance, if you want to subscribe to a topic called `IsMoving`(in `vehicle-signals` crate),you can refer to the following implementation :
+1. You can use  `subscribe()` or `subscribe_async()` within the context of a node to subscribe to a topic. For instance, if you want to subscribe to a topic called `Speed`(in `vehicle-signals` crate),you can refer to the following implementation :
 
 ```rust
 let mut subscribe_options = SubscribeOptions::default();
@@ -167,7 +168,7 @@ let mut speed_reader= node.subscribe_async::<v3::vehicle::Speed>(&subscribe_opti
 let mut speed = Samples::<Speed>::new(1);
 ```
 
-3. Use the reader created in step #1 to read the values of the subscribed topics as shown below:
+3. Use the reader created in step #1 to read the values of the subscribed topic as shown below:
 
 ```rust
 let mut speed = Samples::<Speed>::new(1);
@@ -210,15 +211,7 @@ struct SenderType {
 
 As per the above implementation, `SenderType` is the name of the topic.
 
-```rust
-let node = NodeBuilder::default()
-            .build("testnode".to_string())
-            .unwrap();
-let publish_options = PublishOptions::default();
-let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
-```
-
-You can publish or subscribe to the topic as explained in [section 1.2.1 and 1.2.2](#b-121-how-to-publish-a-topicb). For instance:
+You can publish or subscribe to the topic as explained in [section 1.2.1 and 1.2.2](#pub). For instance, if you want to publish the above mentioned topic(`SenderType`),you can refer to the following code:
 
 ```rust
 let node = NodeBuilder::default()
@@ -227,8 +220,7 @@ let node = NodeBuilder::default()
 let publish_options = PublishOptions::default();
 let mut writer = node.advertise::<SenderType>(&publish_options).unwrap();
 ```
-
-For better understanding refer to the follwing code :
+Please look into the following reference for better understanding :
 <https://github.com/sabaton-rs/sabaton-mw/blob/main/src/tests.rs>
 
 <a name="service-app"></a>
@@ -249,9 +241,9 @@ The Server ECU provides a service instance which implements a service interface.
 
 ### <b> 3.2 Service </b>
 
-Interfaces are defined by using traits (Example in the above example) and a derive macro(service in the above example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
+Interfaces are defined by using traits (`Example` in the below example) and a derive macro(`service` in the below example). The services are a combination of fields, events, and/or methods. A field represents the status of an entity. Event is a message communicated from the server to the client when a value is changed or cyclically communicated to clients. Method is a (programming) function/procedure/subroutine that can be invoked. A method is run on the server on remote invocation from the client.
 
-Let us use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our application. Default node uses a crate called `interface-example` where a service is already defined for you. The service which is defined in `interface-example` crate is as shown below:
+Let us use the default node template [(using cargo-generate)](#sabatonnode-generate) for our application. Default node uses a crate called `interface-example` where a service is already defined for you. The service which is defined in `interface-example` crate is as shown below:
 
 ```rust numberLines
 #[service(name("dev.sabaton.ExampleInterface"),
@@ -293,7 +285,7 @@ pub enum ExampleError {
 }
 ```
 
-In the above example only 1 feild (ExampleStatus) is used. If you want to use more events and methods you can modify your interface definition. For example:
+In the above example only 1 feild (`ExampleStatus`) is used. If you want to use more events and methods you can modify your interface definition. For example:
 
 ```rust
 #[service(name("dev.sabaton.ExampleInterface"),
@@ -356,7 +348,7 @@ As you can see from the above code, `echo()`function of the trait   `Example` is
 
 #### <b> 3.2.2 How to utilise a service in a Client application? </b>
 
-Let us again use the default node template [(using cargo-generate)](#b-112-using-cargo-generate-b) for our client application.  
+Let us again use the default node template [(using cargo-generate)](#sabatonnode-generate) for our client application.  
 
 #### <b> Steps to be followed </b>
 
@@ -368,7 +360,7 @@ someip_derive = "0.1.0"
 interface-example = { git = "https://github.com/sabaton-rs/interface-example.git"}
 ```
 
-2. Default node template creates a default node(in this case `node`) for you (Using `NodeBuilder`). Create a client proxy be using `create_proxy` method as shown below:
+2. Default node template creates a default node(in this case `node`) for you (Using `NodeBuilder`). Create a client proxy by using `create_proxy` method as shown below:
 
 ```rust
 let mut node = NodeBuilder::default()
@@ -441,7 +433,7 @@ impl Default for UpdateStatus {
 ```
 
 3. Build the interface code.
-4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#321-b-how-to-add-service-in-a-server-applicationb) and its ready to use.
+4. Add the path of the interface into the Cargo.toml file of your application as we have done  in [previous section](#server) and its ready to use.
 
 <a name="smt"></a>
 
@@ -462,7 +454,7 @@ iceoryx is an inter-process-communication (IPC) middleware for various operating
 
 [SMT.webm](https://user-images.githubusercontent.com/102716966/194551842-291a3217-cebd-4cce-a4fd-6b398f525c5e.webm)
 
-You can have multiple subscribers. Each subscriber gets a handle and can use the memory. After the usage it frees the handle. When all the handles are freed, buffer goes back to pool and can be reused.
+You can have multiple subscribers. Each subscriber gets a handle and can use the memory. After usage it frees the handle. When all the handles are freed, buffer goes back to pool and can be reused.
 
 Important thing to note here is that memory is allocated by a pool manager and not the publisher. When a publisher wants to publish data, it has to first `loan` a memory region, put data into memory and then publish that memory.
 
@@ -548,13 +540,13 @@ let mut node = NodeBuilder::default().with_shared_memory(true);
  let mut shm_subscribe_options = SubscribeOptions::default();
 ```
 
-3. Subscribe to the topic as shown below:
+3. Subscribe to the topic(in this case `Image1080p4BPP`) as shown below:
 
 ```rust
 let mut reader= node.subscribe_async::<Image1080p4BPP>(&shm_subscribe_options).expect("Unable to advertise");
 ```
 
-4. Access the data as explained in [previous-section](#b-122-how-to-subscribe-to-a-topicb)
+4. Access the data as explained in [previous-section](#sub)
 
 An example of a communication between a publisher(Left side image) and a subscriber(Right side image) is shown below:
 
