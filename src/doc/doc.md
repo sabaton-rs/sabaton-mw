@@ -113,7 +113,7 @@ Publish/subscribe messaging, or pub/sub messaging, is a form of asynchronous ser
 
 <img  src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/Publisher_subscriber.png" alt="Publisher subscriber mechanism;" title="Publisher subscriber mechanism(Image from :https://www.dds-foundation.org/what-is-dds-3/)/" />
 
-Publisher subscriber mechanism(Image from :https://www.dds-foundation.org/what-is-dds-3/)
+<i>Publisher subscriber mechanism(Image from :https://www.dds-foundation.org/what-is-dds-3/)</i>
 
 The OMG Data Distribution Service (DDS™) is a middleware protocol and API standard for data-centric connectivity from the Object Management Group® (OMG®).
 Vehicle-signal crate generates the DDS Topic types for use in an automotive platform.
