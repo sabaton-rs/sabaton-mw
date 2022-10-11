@@ -1,4 +1,5 @@
-Sabaton Middleware is available under either a [commercial license](LICENSES/LicenseRef-sabaton-commercial.md) license or at your choice under [GPL 3.0](LICENSES/GPL-3.0-only.txt).
+At this time, the Sabaton Middleware is available under either a [commercial license](LICENSES/LicenseRef-sabaton-commercial.md) license or at your choice under [Apache-2.0](LICENSES/Apache-2.0).  
 
-Please contact sjames@sabaton.dev for information on commercial licensing.
+
+Please create a github issue for any queries on licensing.
 

@@ -2,7 +2,7 @@
     Copyright (C) Sabaton Systems LLP - All Rights Reserved
     Sojan James <sojan.james@gmail.com>, 2021
 
-    SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-sabaton-commercial
+    SPDX-License-Identifier: Apache-2.0 OR LicenseRef-sabaton-commercial
 */
 
 //! The Sabaton Middleware is the interface Sabaton applications
