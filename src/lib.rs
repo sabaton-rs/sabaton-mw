@@ -54,7 +54,7 @@ pub mod services;
 #[cfg(test)]
 mod tests;
 
-pub use cdds::cdds::CddsQos as QosImpl;
+//pub use cdds::cdds::CddsQos as QosImpl;
 
 const SERVICE_MAPPING_CONFIG_PATH: &str = "/etc/sabaton/services.toml";
 
