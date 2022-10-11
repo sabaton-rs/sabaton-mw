@@ -92,15 +92,29 @@ impl<T> Writer<T>
 where
     T: TopicType,
 {
+
+    /// Publish data to the topic writer
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The data to be published wrapped in an Arc<T>. 
+    ///
     pub fn publish(&mut self, msg: Arc<T>) -> Result<(), MiddlewareError> {
         self.writer
             .write(msg)
             .map_err(MiddlewareError::DDSError)
     }
 
-    // Loan a buffer from the stack. This may not be supported always.
-    // The topic must of Fixed size and shared memory must be enabled in
-    // cyclone for this to work.
+    /// Loan a buffer from the writer. This may not be supported always.
+    /// The topic must of Fixed size and shared memory must be enabled in
+    /// cyclone for this to work.
+    /// 
+    /// Loaning is useful for large buffers being sent locally, like image buffers
+    /// Buffers are allocated from a shared memory pool and a reference to the buffer
+    /// is sent to the readers
+    /// 
+    /// Important:  Shared memory topics can only be published to recipients on the same
+    /// machine.
     pub fn loan(&mut self) -> Result<Loaned<T>, MiddlewareError> {
         match self.writer.loan() {
             Ok(l) => Ok(Loaned { inner: l }),
@@ -111,9 +125,15 @@ where
         }
     }
 
-    // Return the loan that was taken.  The buffer will be published if it is marked
-    // as initialized by the ``Loaned::assume_init`` function. If not initialized
-    // the buffer will be simple returned to the pool.
+    /// Return the loan that was taken.  The buffer will be published if it is marked
+    /// as initialized by the ``Loaned::assume_init`` function. If not initialized
+    /// the buffer will be simple returned to the pool.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `buffer` - The buffer that was loaned.  The Loaned<T> holds an initialization
+    ///              state. If the previously loaned buffer was not initialized, the buffer
+    ///              will be returned to the pool without publishing it.
     pub fn return_loan(&mut self, buffer: Loaned<T>) -> Result<(), MiddlewareError> {
         self.writer
             .return_loan(buffer.inner)
@@ -129,16 +149,22 @@ impl<T> Loaned<T>
 where
     T: Sized + TopicType,
 {
+    /// Access the buffer via a mutable pointer so you can
+    /// write into it
     pub fn as_mut_ptr(&mut self) -> Option<*mut T> {
         self.inner.as_mut_ptr()
     }
 
+    /// Mark the loaned buffer as initialized. You will call this method
+    /// after writing the data via the pointer you got from ``Loaned::as_mut_ptr``
+    /// TODO: Perhaps this should be made unsafe
     pub fn assume_init(self) -> Self {
         Loaned {
             inner: self.inner.assume_init(),
         }
     }
 }
+
 
 pub struct SampleStorage<T: TopicType> {
     sample: cyclonedds_rs::serdes::SampleStorage<T>,
@@ -155,6 +181,8 @@ where
     }
 }
 
+/// A buffer to store samples. This is used for receiving
+/// one or more samples from the reader.
 pub struct Samples<T: TopicType> {
     samples: SampleBuffer<T>,
 }
@@ -163,12 +191,20 @@ impl<'a, T> Samples<T>
 where
     T: TopicType,
 {
+    /// Create a new sample buffer with `len` elements.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `len` - number of elements to store in the sample buffer
+    /// 
     pub fn new(len: usize) -> Self {
         Self {
             samples: SampleBuffer::new(len),
         }
     }
 
+    /// Create an iterator to iterate over valid sample buffers
+    /// Invalid samples will be skipped by the iterator
     pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
         self.samples.iter()
     }
@@ -184,11 +220,13 @@ impl<T> SyncReader<T> for Reader<T>
 where
     T: TopicType,
 {
+    /// Synchronous take. This call willl block until atleast one sample is read
     fn take_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         self.reader
             .take_now(&mut samples.samples)
             .map_err(|e| e.into())
     }
+    /// Synchronous read. This call willl block until atleast one sample is read
     fn read_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         self.reader
             .read_now(&mut samples.samples)
@@ -202,6 +240,7 @@ impl<T> AsyncReader<T> for Reader<T>
 where
     T: TopicType + std::marker::Send + std::marker::Sync,
 {
+    /// Asynchronous take
     async fn take(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         let res = self
             .reader
@@ -211,6 +250,7 @@ where
 
         res
     }
+    /// Asynchronous read
     async fn read(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         let res = self
             .reader
@@ -297,6 +337,10 @@ impl NodeBuilder {
         }
     }
 
+    /// Enable shared memory.  Shared memory will work only
+    /// if the underlying shared memory transport is available.
+    /// This means iox-roudi must be running with enough of 
+    /// memory allocated to support the shared memory topic.
     pub fn with_shared_memory(mut self, enabled : bool) -> Self {
         self.shared_memory = enabled;
         self
@@ -457,7 +501,9 @@ impl Node {
         }
     }
 
-    /// Advertise a Type to the rest of the system. 
+    /// Advertise a Type to the rest of the system. This call returns a Writer<T> which you
+    /// can use to publish samples to the topic. The topic name is create from the type of T and 
+    /// the combination of the group and instance.
     pub fn advertise<T>(&self, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
     where
         T: TopicType,
@@ -501,6 +547,8 @@ impl Node {
         }
     }
 
+    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
+    /// the reader.
     pub fn subscribe<T>(
         &self,
         options: &SubscribeOptions,
@@ -574,6 +622,8 @@ impl Node {
         }
     }
 
+    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
+    /// the reader. The reader that is returned supports asynchronous reads.
     pub fn subscribe_async<T>(&self, options: &SubscribeOptions) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
@@ -618,7 +668,7 @@ impl Node {
         }
     }
 
-    // create a proxy for a service
+    /// create a proxy for a service
     pub fn create_proxy<
         T: 'static + Proxy + ProxyConstruct + ServiceIdentifier + ServiceVersion + Clone,
     >(
@@ -646,7 +696,7 @@ impl Node {
         }
     }
 
-    //Hosting services
+    ///Hosting a service
     pub fn serve<T: CreateServerRequestHandler<Item = T>>(
         &self,
         server_impl: Arc<T>,
