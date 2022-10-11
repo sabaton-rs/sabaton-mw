@@ -337,6 +337,10 @@ impl NodeBuilder {
         }
     }
 
+    /// Enable shared memory.  Shared memory will work only
+    /// if the underlying shared memory transport is available.
+    /// This means iox-roudi must be running with enough of 
+    /// memory allocated to support the shared memory topic.
     pub fn with_shared_memory(mut self, enabled : bool) -> Self {
         self.shared_memory = enabled;
         self
@@ -497,7 +501,9 @@ impl Node {
         }
     }
 
-    /// Advertise a Type to the rest of the system. 
+    /// Advertise a Type to the rest of the system. This call returns a Writer<T> which you
+    /// can use to publish samples to the topic. The topic name is create from the type of T and 
+    /// the combination of the group and instance.
     pub fn advertise<T>(&self, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
     where
         T: TopicType,
@@ -541,6 +547,8 @@ impl Node {
         }
     }
 
+    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
+    /// the reader.
     pub fn subscribe<T>(
         &self,
         options: &SubscribeOptions,
@@ -614,6 +622,8 @@ impl Node {
         }
     }
 
+    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
+    /// the reader. The reader that is returned supports asynchronous reads.
     pub fn subscribe_async<T>(&self, options: &SubscribeOptions) -> Result<Reader<T>, MiddlewareError>
     where
         T: TopicType,
@@ -658,7 +668,7 @@ impl Node {
         }
     }
 
-    // create a proxy for a service
+    /// create a proxy for a service
     pub fn create_proxy<
         T: 'static + Proxy + ProxyConstruct + ServiceIdentifier + ServiceVersion + Clone,
     >(
@@ -686,7 +696,7 @@ impl Node {
         }
     }
 
-    //Hosting services
+    ///Hosting a service
     pub fn serve<T: CreateServerRequestHandler<Item = T>>(
         &self,
         server_impl: Arc<T>,
