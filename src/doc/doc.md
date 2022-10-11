@@ -571,3 +571,11 @@ pub struct ExampleFixedSizeData {
     pub data : [u8;32],
  }
 ```
+
+<a name="deps"></a>
+## <div style="color:red"> 6. Required dependencies </div>
+
+Download and install the following packages before using this crate.
+
+1. Eclipse Cyclone DDS 0.10.x branch  - https://github.com/eclipse-cyclonedds/cyclonedds/tree/releases/0.10.x
+2. Eclipse Iceoryx Release_2.0 branch - https://github.com/eclipse-iceoryx/iceoryx/tree/release_2.0
