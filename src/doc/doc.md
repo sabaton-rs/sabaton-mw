@@ -23,6 +23,7 @@ This document explains in detail about the different concepts of Sabaton middlew
 - [5. Shared memory transport](#smt)
   - [5.1 How to publish a topic?](#smt-pub)
   - [5.2 How to subscribe to a topic?](#smt-sub)
+  - [5.3 Fixed size topics for shared memory](#fixed-size)
   
 <a name="sabatonnode"></a>
 
@@ -457,7 +458,7 @@ The shared memory (SHM) transport enables fast communications between entities r
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/shared_memory.png" alt="shared_memory.png;" title ="Image from :https://discourse.ros.org/t/eprosima-fast-dds-from-shared-memory-to-zero-copy/18877"/>
 
 (Image from :https://discourse.ros.org/t/eprosima-fast-dds-from-shared-memory-to-zero-copy/18877)  
-We can implement the concept of shared memory using iceoryx and cyclonedds.
+Cyclonedds integrates with Eclipse Iceoryx for transparently using shared memory when supported.
 
 iceoryx is an inter-process-communication (IPC) middleware for various operating systems.iceoryx uses a true zero-copy, shared memory approach that allows to transfer data from publishers to subscribers without a single copy. This ensures data transmissions with constant latency, regardless of the size of the payload. Following are the steps followed:
 
@@ -474,7 +475,7 @@ You can have multiple subscribers. Each subscriber gets a handle and can use the
 
 Important thing to note here is that memory is allocated by a pool manager and not the publisher. When a publisher wants to publish data, it has to first `loan` a memory region, put data into memory and then publish that memory.
 
-CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using <https://github.com/eclipse-iceoryx/iceoryx>) concept instead of serializing to a network.
+CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on the same machine, it will use the shared memory(using <https://github.com/eclipse-iceoryx/iceoryx>) instead of serializing to a network.
 
 <a name="smt-pub"></a>
 
@@ -486,7 +487,7 @@ CyclodeDDS checks if iceoryx is available and if publisher and subscriber are on
 let mut node = NodeBuilder::default().with_shared_memory(true);
 ```
 
-2. Define the `PublishOptions` as per your requirements. Please find an example below:
+2. Define the `PublishOptions` as shown below. Shared memory restricts the capabilities you can set on the topic. Please find an example below:
 
 ```rust
  let mut shm_publish_options = PublishOptions::default();
@@ -567,3 +568,20 @@ let mut reader= node.subscribe_async::<Image1080p4BPP>(&shm_subscribe_options).e
 An example of a communication between a publisher(Left side image) and a subscriber(Right side image) is shown below:
 
 <img src="https://github.com/sabaton-rs/sabaton-mw/blob/main/src/doc/SMT_pub_sub.png" alt="SMT_pub_sub.png;"/>
+
+<a name="fixed-size"></a>
+### <b> 5.3 Fixed size topics for shared memory </b>
+Shared memory buffers must be fully self contained and hence all topics over shared memory must be fixed
+size. This means you cannot use any dynamically sized types such as Strings or Vectors. To create 
+a structure that can be used as a shared memory topic, you must derive from TopicFixedSize.  See how
+the fixed size images are defined here. https://github.com/sabaton-rs/robotics-signals/blob/5a042b66383e2ecce8cfee1f74805d053356d2db/src/sensors/image.rs#L215
+
+```rust
+#[derive(Serialize, Deserialize, TopicFixedSize)]
+pub struct ExampleFixedSizeData {
+    pub header: HeaderFixedSize,
+    pub encoding: Encoding,
+    pub stride: u32,
+    pub data : [u8;32],
+ }
+```
