@@ -1,6 +1,6 @@
 [package]
 name = "sabaton-mw"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 license = "Apache-2.0 OR LicenseRef-sabaton-commercial"
 authors = ["Sojan James <Sojan.James@gmail.com>"]
