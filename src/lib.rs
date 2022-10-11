@@ -165,6 +165,7 @@ where
     }
 }
 
+
 pub struct SampleStorage<T: TopicType> {
     sample: cyclonedds_rs::serdes::SampleStorage<T>,
 }
@@ -180,6 +181,8 @@ where
     }
 }
 
+/// A buffer to store samples. This is used for receiving
+/// one or more samples from the reader.
 pub struct Samples<T: TopicType> {
     samples: SampleBuffer<T>,
 }
@@ -188,12 +191,20 @@ impl<'a, T> Samples<T>
 where
     T: TopicType,
 {
+    /// Create a new sample buffer with `len` elements.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `len` - number of elements to store in the sample buffer
+    /// 
     pub fn new(len: usize) -> Self {
         Self {
             samples: SampleBuffer::new(len),
         }
     }
 
+    /// Create an iterator to iterate over valid sample buffers
+    /// Invalid samples will be skipped by the iterator
     pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
         self.samples.iter()
     }
@@ -209,11 +220,13 @@ impl<T> SyncReader<T> for Reader<T>
 where
     T: TopicType,
 {
+    /// Synchronous take. This call willl block until atleast one sample is read
     fn take_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         self.reader
             .take_now(&mut samples.samples)
             .map_err(|e| e.into())
     }
+    /// Synchronous read. This call willl block until atleast one sample is read
     fn read_now(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         self.reader
             .read_now(&mut samples.samples)
@@ -227,6 +240,7 @@ impl<T> AsyncReader<T> for Reader<T>
 where
     T: TopicType + std::marker::Send + std::marker::Sync,
 {
+    /// Asynchronous take
     async fn take(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         let res = self
             .reader
@@ -236,6 +250,7 @@ where
 
         res
     }
+    /// Asynchronous read
     async fn read(&mut self, samples: &mut Samples<T>) -> Result<usize, MiddlewareError> {
         let res = self
             .reader
