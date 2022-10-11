@@ -24,9 +24,9 @@ This document explains in detail about the different concepts of Sabaton middlew
   - [5.1 How to publish a topic?](#smt-pub)
   - [5.2 How to subscribe to a topic?](#smt-sub)
   - [5.3 Fixed size topics for shared memory](#fixed-size)
-  
-<a name="sabatonnode"></a>
+- [6. Required dependencies](#deps)
 
+<a name="sabatonnode"></a>
 ## <div style="color:red">1.Sabaton node and Publish-Subscribe Architecture </div>
 
 This topic will help you to create a sabaton Node and publish a sample topic or subscribe to a topic from vehicle-signal crate.
@@ -493,7 +493,7 @@ let shm_publish_options = shm_publish_options
 
 4. Loan a memory using the writer which we got in step#3 as shown below:  
 
-```rust
+```rust3
  writer.loan();
 ```
 
