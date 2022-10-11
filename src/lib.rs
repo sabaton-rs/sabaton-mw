@@ -92,15 +92,29 @@ impl<T> Writer<T>
 where
     T: TopicType,
 {
+
+    /// Publish data to the topic writer
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - The data to be published wrapped in an Arc<T>. 
+    ///
     pub fn publish(&mut self, msg: Arc<T>) -> Result<(), MiddlewareError> {
         self.writer
             .write(msg)
             .map_err(MiddlewareError::DDSError)
     }
 
-    // Loan a buffer from the stack. This may not be supported always.
-    // The topic must of Fixed size and shared memory must be enabled in
-    // cyclone for this to work.
+    /// Loan a buffer from the writer. This may not be supported always.
+    /// The topic must of Fixed size and shared memory must be enabled in
+    /// cyclone for this to work.
+    /// 
+    /// Loaning is useful for large buffers being sent locally, like image buffers
+    /// Buffers are allocated from a shared memory pool and a reference to the buffer
+    /// is sent to the readers
+    /// 
+    /// Important:  Shared memory topics can only be published to recipients on the same
+    /// machine.
     pub fn loan(&mut self) -> Result<Loaned<T>, MiddlewareError> {
         match self.writer.loan() {
             Ok(l) => Ok(Loaned { inner: l }),
@@ -111,9 +125,15 @@ where
         }
     }
 
-    // Return the loan that was taken.  The buffer will be published if it is marked
-    // as initialized by the ``Loaned::assume_init`` function. If not initialized
-    // the buffer will be simple returned to the pool.
+    /// Return the loan that was taken.  The buffer will be published if it is marked
+    /// as initialized by the ``Loaned::assume_init`` function. If not initialized
+    /// the buffer will be simple returned to the pool.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `buffer` - The buffer that was loaned.  The Loaned<T> holds an initialization
+    ///              state. If the previously loaned buffer was not initialized, the buffer
+    ///              will be returned to the pool without publishing it.
     pub fn return_loan(&mut self, buffer: Loaned<T>) -> Result<(), MiddlewareError> {
         self.writer
             .return_loan(buffer.inner)
@@ -129,10 +149,15 @@ impl<T> Loaned<T>
 where
     T: Sized + TopicType,
 {
+    /// Access the buffer via a mutable pointer so you can
+    /// write into it
     pub fn as_mut_ptr(&mut self) -> Option<*mut T> {
         self.inner.as_mut_ptr()
     }
 
+    /// Mark the loaned buffer as initialized. You will call this method
+    /// after writing the data via the pointer you got from ``Loaned::as_mut_ptr``
+    /// TODO: Perhaps this should be made unsafe
     pub fn assume_init(self) -> Self {
         Loaned {
             inner: self.inner.assume_init(),
