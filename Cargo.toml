@@ -1,12 +1,8 @@
 [package]
 name = "sabaton-mw"
-version = "0.3.1"
+version = "0.3.0"
 edition = "2021"
-license = "Apache-2.0 OR LicenseRef-sabaton-commercial"
-authors = ["Sojan James <Sojan.James@gmail.com>"]
-description = "Sabaton Middleware"
-license-file = "LICENSE.md"
-homepage = "https://github.com/sabaton-rs/sabaton-mw"
+license = "GPL-3.0 OR LicenseRef-sabaton-commercial"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -23,11 +19,12 @@ serde = "1"
 serde_derive = "1"
 tracing = "0.1.32"
 toml = "0.5"
-tokio = {version = "1", features = ["full"]}
+tokio = {version = "1.4.0", features = ["full"]}
 async-signals = "0.4.0"
 libc = "0.2.121"
 futures-util = "0.3.21"
 fix-hidden-lifetime-bug = "0.2.4"
+anyhow = "1.0"
 
 [dev-dependencies]
 interface-example = {git = "https://github.com/sabaton-rs/interface-example.git"}
