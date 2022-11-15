@@ -1,11 +1,11 @@
 use std::{env, fs, os::unix::prelude::PermissionsExt, path::Path};
-
+use log::debug;
 use crate::error::MiddlewareError;
 
-pub fn create_directory(application_name: &String) -> Result<(), MiddlewareError> {
+pub fn create_home_directory_if_required(application_name: &String) -> Result<(), MiddlewareError> {
     let name = "HOME";
     match env::var(name) {
-        Ok(v) => println!("{}: {}", name, v),
+        Ok(v) => log::debug!("HOME environment variable is set to {}. Using it", name),
         Err(e) => {
             let path = Path::new("/data/home/");
             let path = path.join(&application_name);

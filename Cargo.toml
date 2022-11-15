@@ -1,9 +1,12 @@
 [package]
 name = "sabaton-mw"
-version = "0.3.0"
+version = "0.3.2"
 edition = "2021"
-license = "GPL-3.0 OR LicenseRef-sabaton-commercial"
-
+license = "Apache-2.0 OR LicenseRef-sabaton-commercial"
+authors = ["Sojan James <Sojan.James@gmail.com>"]
+description = "Sabaton Middleware"
+license-file = "LICENSE.md"
+homepage = "https://github.com/sabaton-rs/sabaton-mw"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -24,7 +27,7 @@ async-signals = "0.4.0"
 libc = "0.2.121"
 futures-util = "0.3.21"
 fix-hidden-lifetime-bug = "0.2.4"
-
+log = "0.4.14"
 [dev-dependencies]
 interface-example = {git = "https://github.com/sabaton-rs/interface-example.git"}
 tracing-subscriber = "0.3.9"
