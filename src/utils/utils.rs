@@ -15,7 +15,7 @@ pub fn create_home_directory_if_required(application_name: &String) -> Result<()
             let metadata = fs::metadata(path)?;
             let mut permissions = metadata.permissions();
 
-            permissions.set_mode(0o644); // Read/write for owner and read for others.
+            permissions.set_mode(0o700); // Read/write for owner and read for others.
         }
     }
 
