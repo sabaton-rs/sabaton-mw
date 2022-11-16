@@ -32,6 +32,7 @@ use someip::{
     tasks::ConnectionInfo, Configuration, CreateServerRequestHandler, Proxy, ProxyConstruct,
     Server, ServerRequestHandler, ServerRequestHandlerEntry, ServiceIdentifier, ServiceVersion,
 };
+use utils::utils::create_home_directory_if_required;
 use std::{
     ops::Deref,
     sync::{Arc, RwLock},
@@ -46,6 +47,7 @@ use crate::{
     qos::{Qos, QosCreate},
     services::get_config_path,
 };
+pub mod utils;
 pub mod cdds;
 pub mod config;
 pub mod error;
@@ -363,7 +365,7 @@ impl NodeBuilder {
         cdds::cdds_config::inject_config_if_allowed(self.shared_memory,self.pub_sub_log_level);
 
         let participant = DdsParticipant::create(None, None, None)?;
-
+        let _dir_res=create_home_directory_if_required(&name);
         let inner = NodeInner {
             name,
             group: self.group,
