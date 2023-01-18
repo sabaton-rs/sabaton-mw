@@ -281,6 +281,7 @@ pub struct NodeBuilder {
     shared_memory : bool,
     pub_sub_log_level : config::LogLevel,
     rpc_log_level: config::LogLevel,
+    stack_size : Option<usize>,
 }
 
 impl Default for NodeBuilder {
@@ -293,6 +294,7 @@ impl Default for NodeBuilder {
             shared_memory : false,
             pub_sub_log_level : config::LogLevel::default(),
             rpc_log_level: config::LogLevel::default(),
+            stack_size : None,
         }
     }
 }
@@ -321,6 +323,13 @@ impl NodeBuilder {
 
         self
     }
+
+    // Set the stack size of the tasks in the threadpool
+    pub fn with_stack_size(mut self, size: usize) -> Self {
+        self.stack_size = Some(size);
+        self
+    }
+
 
     /// Use a multi-threaded runtime.
     pub fn multi_threaded(mut self) -> Self {
@@ -378,6 +387,7 @@ impl NodeBuilder {
             proxies: Vec::new(),
             single_threaded: self.single_threaded,
             num_workers: self.num_workers,
+            stack_size : self.stack_size,
         };
 
         Ok(Node {
@@ -398,6 +408,7 @@ struct NodeInner {
     proxies: Vec<(String, Box<dyn Proxy>, u8, u32)>,
     single_threaded: bool,
     num_workers: usize,
+    stack_size : Option<usize>,
 }
 
 #[derive(Default)]
@@ -728,6 +739,10 @@ impl Node {
 
         builder.thread_name(format!("{}-worker", self.inner.read().unwrap().name));
         builder.enable_all();
+
+        if let Some(size) = self.inner.read().unwrap().stack_size {
+            builder.thread_stack_size(size as usize);
+        }
 
         let rt = builder
             .build()
