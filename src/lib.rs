@@ -21,7 +21,7 @@ use async_signals::Signals;
 use async_trait::async_trait;
 use cyclonedds_rs::{
     DdsParticipant, DdsPublisher, DdsReader, DdsSubscriber, DdsWriter, PublisherBuilder,
-    ReaderBuilder, SampleBuffer, SubscriberBuilder, TopicBuilder, TopicType, WriterBuilder,
+    ReaderBuilder, SampleBuffer, SubscriberBuilder, TopicBuilder, TopicType, WriterBuilder as CDDSWriterBuilder, DdsListener, DdsListenerBuilder,
 };
 use error::MiddlewareError;
 use futures::TryFutureExt;
@@ -36,7 +36,7 @@ use utils::utils::create_home_directory_if_required;
 use std::{
     ops::Deref,
     sync::{Arc, RwLock},
-    time::Duration,
+    time::Duration, marker::PhantomData,
 };
 use tokio::runtime::Builder;
 use tracing::{debug, error};
@@ -264,6 +264,28 @@ where
     }
 }
 
+/* 
+#[derive(Default)]
+pub struct ReaderListenerBuilder{listener: DdsListenerBuilder}
+
+impl ReaderListenerBuilder {
+    pub fn new() -> Self {
+        ReaderListenerBuilder::default()
+    }
+
+    pub fn on_data_available<F>(&mut self, callback: F) -> &mut Self
+    where
+        F: FnMut() + 'static ,
+    {
+        self.listener = self.listener.on_data_available(|_|callback());
+        self
+    }
+}
+*/
+pub struct ReaderListener {
+    listener: DdsListener,
+}
+
 /// All the functionality is implemented in the Node structure. To interact with the other
 /// services of the Sabaton system, a node structure must be created.
 /// The `NodeBuilder` structure provides a builder pattern to create 
@@ -282,6 +304,8 @@ pub struct NodeBuilder {
     pub_sub_log_level : config::LogLevel,
     rpc_log_level: config::LogLevel,
     stack_size : Option<usize>,
+    trace_enabled : bool,
+    trace_level : String,
 }
 
 impl Default for NodeBuilder {
@@ -295,6 +319,8 @@ impl Default for NodeBuilder {
             pub_sub_log_level : config::LogLevel::default(),
             rpc_log_level: config::LogLevel::default(),
             stack_size : None,
+            trace_enabled : false,
+            trace_level : "trace".to_owned()
         }
     }
 }
@@ -366,12 +392,17 @@ impl NodeBuilder {
         self.rpc_log_level = log_level;
         self
     }
-    
 
+    pub fn with_trace_enabled(mut self, enabled : bool, level : &str) -> Self {
+        self.trace_enabled = enabled;
+        self.trace_level = level.to_owned();
+        self
+    }
+    
     /// Create the Node structure
     pub fn build(self, name: String) -> Result<Node, MiddlewareError> {
         
-        cdds::cdds_config::inject_config_if_allowed(self.shared_memory,self.pub_sub_log_level);
+        cdds::cdds_config::inject_config_if_allowed(self.shared_memory,self.pub_sub_log_level, self.trace_enabled, &self.trace_level);
 
         let participant = DdsParticipant::create(None, None, None)?;
         let _dir_res=create_home_directory_if_required(&name);
@@ -483,11 +514,77 @@ impl SubscribeOptions {
     }
 }
 
+#[derive(Default)]
+pub struct PublisherListenerBuilder {
+    listener_builder : Option<DdsListenerBuilder>, 
+}
+
+impl PublisherListenerBuilder {
+    pub fn new() -> PublisherListenerBuilder {
+        Self { listener_builder: Some(DdsListenerBuilder::new())}   
+    }
+
+    pub fn on_publication_matched<F>(&mut self, mut callback: F) -> &mut Self
+    where
+        F: FnMut(PublicationMatchedStatus ) + 'static,
+    {
+        self.listener_builder.as_mut().unwrap().on_publication_matched(move |_e,v|callback(v.into()));
+        self
+    }
+
+    pub fn build(&mut self) -> PublisherListener {
+        PublisherListener(self.listener_builder.take().unwrap())
+    }
+}
+
+pub struct PublisherListener(DdsListenerBuilder);
+
+#[derive(Default)]
+pub struct SubscriberListenerBuilder {
+    listener_builder : Option<DdsListenerBuilder>,
+}
+
+impl SubscriberListenerBuilder {
+    pub fn new() -> SubscriberListenerBuilder {
+        Self { listener_builder: Some(DdsListenerBuilder::new())}   
+    }
+
+    pub fn on_subscription_matched<F>(&mut self, mut callback: F) -> &mut Self
+    where
+        F: FnMut(SubscriptionMatchedStatus ) + 'static,
+    {
+        self.listener_builder.as_mut().unwrap()
+            .on_subscription_matched(move |_e,v|callback(v.into()));
+        self
+    }
+
+    pub fn build(&mut self) -> SubscriberListener {
+        SubscriberListener(self.listener_builder.take().unwrap())
+    }
+}
+
+pub struct SubscriberListener(DdsListenerBuilder);
+
+pub struct PublicationMatchedStatus {
+    pub total_count: u32,
+    pub total_count_change: i32,
+    pub current_count: u32,
+    pub current_count_change: i32,
+}
+
+pub struct SubscriptionMatchedStatus {
+    pub total_count: u32,
+    pub total_count_change: i32,
+    pub current_count: u32,
+    pub current_count_change: i32,
+}
+
 impl Node {
     fn get_topic_prefix(group: &str, instance: &str) -> Option<String> {
         let prefix = format!("/{}/{}", group, instance);
         Some(prefix)
     }
+
 
     fn advertise_internal<T>(&self, topic_path: &str, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
     where
@@ -505,7 +602,7 @@ impl Node {
 
             let qos = publish_options_to_cdds_qos(options)?;
 
-            let writer = WriterBuilder::new()
+            let writer = CDDSWriterBuilder::new()
                 .with_qos(qos.into())
                 .create(inner.maybe_publisher.as_ref().unwrap(), topic)?;
             Ok(Writer { writer })
@@ -514,10 +611,11 @@ impl Node {
         }
     }
 
-    /// Advertise a Type to the rest of the system. This call returns a Writer<T> which you
-    /// can use to publish samples to the topic. The topic name is create from the type of T and 
-    /// the combination of the group and instance.
-    pub fn advertise<T>(&self, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
+    pub fn advertise_with_listener<T: TopicType>(&self, options: &PublishOptions, listener : PublisherListener) -> Result<Writer<T>, MiddlewareError> {
+        self.advertise_with_maybe_listener(options, Some(listener.0))
+    }
+
+    fn advertise_with_maybe_listener<T>(&self, options: &PublishOptions, maybe_listener : Option<DdsListenerBuilder>) -> Result<Writer<T>, MiddlewareError> 
     where
         T: TopicType,
     {
@@ -551,21 +649,37 @@ impl Node {
 
             let qos = publish_options_to_cdds_qos(options)?;
 
-            let writer = WriterBuilder::new()
-                .with_qos(qos.into())
-                .create(inner.maybe_publisher.as_ref().unwrap(), topic)?;
-            Ok(Writer { writer })
+
+            let writer_builder = CDDSWriterBuilder::new()
+                .with_qos(qos.into());
+            
+            let writer_builder = if let Some(mut listener_builder) = maybe_listener {
+                let listener = listener_builder.build();
+                writer_builder.with_listener(listener)
+            } else { writer_builder};
+
+            let w = writer_builder.create(inner.maybe_publisher.as_ref().unwrap(), topic)?;
+            Ok(Writer { writer: w })
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
         }
     }
 
-    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
-    /// the reader.
-    pub fn subscribe<T>(
+    /// Advertise a Type to the rest of the system. This call returns a Writer<T> which you
+    /// can use to publish samples to the topic. The topic name is create from the type of T and 
+    /// the combination of the group and instance.
+    pub fn advertise<T>(&self, options: &PublishOptions) -> Result<Writer<T>, MiddlewareError>
+    where
+        T: TopicType,
+    {
+        self.advertise_with_maybe_listener(options, None)
+    }
+
+    fn subscribe_with_maybe_listener<T>(
         &self,
         options: &SubscribeOptions,
-    ) -> Result<Reader<T>, MiddlewareError>
+        maybe_listener : Option<SubscriberListener>
+    ) -> Result<Reader<T>, MiddlewareError> 
     where
         T: TopicType,
     {
@@ -599,13 +713,33 @@ impl Node {
 
             let qos = subscribe_options_to_cdds_qos(options)?;
 
-            let reader = ReaderBuilder::new()
-                .with_qos(qos.into())
-                .create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
-            Ok(Reader { reader })
+            let mut reader = ReaderBuilder::new()
+                .with_qos(qos.into());
+
+            if let Some(mut listener_builder) = maybe_listener {
+                reader = reader.with_listener(listener_builder.0.build())
+            }
+            Ok(Reader { reader : reader.create(inner.maybe_subscriber.as_ref().unwrap(), topic)? })
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
         }
+    }
+
+    pub fn subscribe_with_listener<T>(&self, options: &SubscribeOptions, listener: SubscriberListener) -> Result<Reader<T>, MiddlewareError>
+    where T: TopicType {
+        self.subscribe_with_maybe_listener(options, Some(listener))
+    }
+    
+    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
+    /// the reader.
+    pub fn subscribe<T>(
+        &self,
+        options: &SubscribeOptions,
+    ) -> Result<Reader<T>, MiddlewareError>
+    where
+        T: TopicType,
+    {
+        self.subscribe_with_maybe_listener(options, None)
     }
 
     fn subscribe_async_internal<T>(&self, topic_path: &str,options: &SubscribeOptions,) -> Result<Reader<T>, MiddlewareError>
@@ -635,9 +769,7 @@ impl Node {
         }
     }
 
-    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
-    /// the reader. The reader that is returned supports asynchronous reads.
-    pub fn subscribe_async<T>(&self, options: &SubscribeOptions) -> Result<Reader<T>, MiddlewareError>
+    fn subscribe_async_with_maybe_listener<T>(&self, options: &SubscribeOptions, maybe_listener : Option<SubscriberListener>) -> Result<Reader<T>, MiddlewareError> 
     where
         T: TopicType,
     {
@@ -670,15 +802,28 @@ impl Node {
             let topic = topic_builder.create(&inner.participant)?;
 
             let qos = subscribe_options_to_cdds_qos(options)?;
-            
-            let reader = ReaderBuilder::new()
+          
+            let mut reader = ReaderBuilder::new()
                 .with_qos(qos.into())
-                .as_async()
-                .create(inner.maybe_subscriber.as_ref().unwrap(), topic)?;
+                .as_async();
+
+            if let Some(mut listener_builder) = maybe_listener {
+                reader = reader.with_listener(listener_builder.0.build())
+            }
+            let reader = reader.create(inner.maybe_subscriber.as_ref().unwrap(), topic)?; 
             Ok(Reader { reader })
         } else {
             Err(MiddlewareError::InconsistentDataStructure)
         }
+    }
+
+    /// Subscribe to a topic. This call returns a Reader<T>.  You can read samples from
+    /// the reader. The reader that is returned supports asynchronous reads.
+    pub fn subscribe_async<T>(&self, options: &SubscribeOptions) -> Result<Reader<T>, MiddlewareError>
+    where
+        T: TopicType,
+    {
+        self.subscribe_async_with_maybe_listener(options,None)
     }
 
     /// create a proxy for a service
@@ -1011,7 +1156,7 @@ mod simple_tests {
             .expect("Node creation");
         let mut subscriber = node
             .subscribe::<A>(&SubscribeOptions::default())
-            .expect("unable ti subscribe");
+            .expect("unable to subscribe");
 
         let mut p = node
             .advertise::<A>(&PublishOptions::default())
@@ -1020,6 +1165,20 @@ mod simple_tests {
         let a = A {
             name: "foo".to_owned(),
         };
+
+        let publisher_listener_builder = 
+        PublisherListenerBuilder::new()
+            .on_publication_matched(move |s| {
+                    println!("Publication matched {}:{}", s.total_count, s.total_count_change);
+                })
+            .build();
+
+
+        let mut wb = node.advertise_with_listener::<A>(&PublishOptions::default(), publisher_listener_builder)
+            .expect("Cannot create writer with listener");
+
+        wb.publish(Arc::new(A { name : "bar".to_owned()})).expect("Cannot publish from wb");
+                
 
         p.publish(Arc::new(a)).expect("Cannot publish");
 

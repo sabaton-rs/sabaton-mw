@@ -5,9 +5,9 @@
     SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-sabaton-commercial
 */
 
-use cyclonedds_rs::{DdsQos, dds_reliability_kind};
+use cyclonedds_rs::{DdsQos, dds_reliability_kind, CddsPublicationMatchedStatus,CddsSubscriptionMatchedStatus};
 
-use crate::{qos::{QosReliability,Qos, QosDurability, QosHistory, QosCreate}, SubscribeOptions, error::MiddlewareError, PublishOptions};
+use crate::{qos::{QosReliability,Qos, QosDurability, QosHistory, QosCreate}, SubscribeOptions, error::MiddlewareError, PublishOptions, PublicationMatchedStatus, SubscriptionMatchedStatus};
 
 
 pub struct CddsQos(DdsQos);
@@ -117,4 +117,26 @@ pub fn publish_options_to_cdds_qos(options: &PublishOptions) -> Result<CddsQos,M
         }
 
         Ok(qos)
+}
+
+impl From<CddsPublicationMatchedStatus> for PublicationMatchedStatus {
+    fn from(value: CddsPublicationMatchedStatus) -> Self {
+        PublicationMatchedStatus { 
+            total_count: value.total_count, 
+            total_count_change: value.total_count_change, 
+            current_count: value.current_count, 
+            current_count_change: value.current_count_change 
+        }
+    }
+}
+
+impl From<CddsSubscriptionMatchedStatus> for SubscriptionMatchedStatus {
+    fn from(value: CddsSubscriptionMatchedStatus) -> Self {
+        SubscriptionMatchedStatus { 
+            total_count: value.total_count, 
+            total_count_change: value.total_count_change, 
+            current_count: value.current_count, 
+            current_count_change: value.current_count_change 
+        }
+    }
 }
